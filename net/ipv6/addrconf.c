@@ -1183,7 +1183,7 @@ retry:
 		addr_flags |= IFA_F_OPTIMISTIC;
 
 	ift = ipv6_add_addr(idev, &addr, NULL, tmp_plen,
-			    ipv6_addr_type(&addr)&IPV6_ADDR_SCOPE_MASK,
+			    ipv6_addr_scope(&addr),
 			    addr_flags);
 	if (IS_ERR(ift)) {
 		in6_ifa_put(ifp);
