@@ -77,7 +77,8 @@ EXPORT_SYMBOL(ipv6_select_ident);
 int ip6_find_1stfragopt(struct sk_buff *skb, u8 **nexthdr)
 {
 	unsigned int offset = sizeof(struct ipv6hdr);
-	unsigned int packet_len = skb->tail - skb->network_header;
+	unsigned int packet_len = skb_tail_pointer(skb) -
+		skb_network_header(skb);
 	int found_rhdr = 0;
 	*nexthdr = &ipv6_hdr(skb)->nexthdr;
 
