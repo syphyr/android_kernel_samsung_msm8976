@@ -3052,7 +3052,8 @@ struct sk_buff *tcp_tso_segment(struct sk_buff *skb,
 			   &skb->sk->sk_wmem_alloc);
 	}
 
-	delta = htonl(oldlen + (skb->tail - skb->transport_header) +
+	delta = htonl(oldlen + (skb_tail_pointer(skb) -
+				skb_transport_header(skb)) +
 		      skb->data_len);
 	th->check = ~csum_fold((__force __wsum)((__force u32)th->check +
 				(__force u32)delta));
