@@ -84,6 +84,7 @@ struct netns_ipv4 {
 	struct fib_rules_ops	*mr_rules_ops;
 #endif
 #endif
+	atomic_t	rt_genid;
 	siphash_key_t	ip_id_key;
 };
 #endif
