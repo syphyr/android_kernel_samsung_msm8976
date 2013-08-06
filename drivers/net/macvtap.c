@@ -635,29 +635,6 @@ static int macvtap_skb_to_vnet_hdr(const struct sk_buff *skb,
 	return 0;
 }
 
-static unsigned long iov_pages(const struct iovec *iv, int offset,
-			       unsigned long nr_segs)
-{
-	unsigned long seg, base;
-	int pages = 0, len, size;
-
-	while (nr_segs && (offset >= iv->iov_len)) {
-		offset -= iv->iov_len;
-		++iv;
-		--nr_segs;
-	}
-
-	for (seg = 0; seg < nr_segs; seg++) {
-		base = (unsigned long)iv[seg].iov_base + offset;
-		len = iv[seg].iov_len - offset;
-		size = ((base & ~PAGE_MASK) + len + ~PAGE_MASK) >> PAGE_SHIFT;
-		pages += size;
-		offset = 0;
-	}
-
-	return pages;
-}
-
 /* Neighbour code has some assumptions on HH_DATA_MOD alignment */
 #define MACVTAP_RESERVE HH_DATA_OFF(ETH_HLEN)
 
