@@ -6,6 +6,7 @@
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/ip6_fib.h>
+#include <net/addrconf.h>
 
 
 static u32 __ipv6_select_ident(struct net *net,
@@ -118,6 +119,27 @@ int ip6_find_1stfragopt(struct sk_buff *skb, u8 **nexthdr)
 	return -EINVAL;
 }
 EXPORT_SYMBOL(ip6_find_1stfragopt);
+
+#if IS_ENABLED(CONFIG_IPV6)
+int ip6_dst_hoplimit(struct dst_entry *dst)
+{
+	int hoplimit = dst_metric_raw(dst, RTAX_HOPLIMIT);
+	if (hoplimit == 0) {
+		struct net_device *dev = dst->dev;
+		struct inet6_dev *idev;
+
+		rcu_read_lock();
+		idev = __in6_dev_get(dev);
+		if (idev)
+			hoplimit = idev->cnf.hop_limit;
+		else
+			hoplimit = dev_net(dev)->ipv6.devconf_all->hop_limit;
+		rcu_read_unlock();
+	}
+	return hoplimit;
+}
+EXPORT_SYMBOL(ip6_dst_hoplimit);
+#endif
 
 int __ip6_local_out(struct sk_buff *skb)
 {

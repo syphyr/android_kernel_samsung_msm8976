@@ -109,8 +109,6 @@ void fib6_force_start_gc(struct net *net);
 struct rt6_info *addrconf_dst_alloc(struct inet6_dev *idev,
 				    const struct in6_addr *addr, bool anycast);
 
-int ip6_dst_hoplimit(struct dst_entry *dst);
-
 /*
  *	support functions for ND
  *
