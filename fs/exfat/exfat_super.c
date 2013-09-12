@@ -1731,11 +1731,7 @@ static void exfat_write_failed(struct address_space *mapping, loff_t to)
 	struct inode *inode = mapping->host;
 	if (to > i_size_read(inode)) {
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,14,00)
 		truncate_pagecache(inode, i_size_read(inode));
-#else
-		truncate_pagecache(inode, to, i_size_read(inode));
-#endif
 		EXFAT_I(inode)->fid.size = i_size_read(inode);
 		_exfat_truncate(inode, i_size_read(inode));
 	}
