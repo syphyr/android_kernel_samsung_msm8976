@@ -293,7 +293,7 @@ static inline void __sdfat_set_bio_iterate(struct bio *bio, sector_t sector,
 }
 
 static void __sdfat_truncate_pagecache(struct inode *inode,
-					loff_t to, loff_t newsize)
+					loff_t newsize)
 {
 	truncate_pagecache(inode, newsize);
 }
@@ -426,9 +426,9 @@ static inline void __sdfat_set_bio_iterate(struct bio *bio, sector_t sector,
 }
 
 static void __sdfat_truncate_pagecache(struct inode *inode,
-					loff_t to, loff_t newsize)
+					loff_t newsize)
 {
-	truncate_pagecache(inode, to, newsize);
+	truncate_pagecache(inode, newsize);
 }
 
 static int sdfat_d_hash(const struct dentry *dentry,
@@ -3701,7 +3701,7 @@ static void sdfat_write_failed(struct address_space *mapping, loff_t to)
 	struct inode *inode = mapping->host;
 
 	if (to > i_size_read(inode)) {
-		__sdfat_truncate_pagecache(inode, to, i_size_read(inode));
+		__sdfat_truncate_pagecache(inode, i_size_read(inode));
 		sdfat_truncate(inode, SDFAT_I(inode)->i_size_aligned);
 	}
 }
