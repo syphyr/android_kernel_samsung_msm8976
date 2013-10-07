@@ -485,7 +485,7 @@ extern int ip_options_rcv_srr(struct sk_buff *skb);
  *	Functions provided by ip_sockglue.c
  */
 
-extern void	ipv4_pktinfo_prepare(struct sk_buff *skb);
+extern void	ipv4_pktinfo_prepare(const struct sock *sk, struct sk_buff *skb);
 extern void	ip_cmsg_recv(struct msghdr *msg, struct sk_buff *skb);
 extern int	ip_cmsg_send(struct net *net,
 			     struct msghdr *msg, struct ipcm_cookie *ipc, bool allow_ipv6);
