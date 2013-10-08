@@ -396,7 +396,7 @@ static int dwc3_ep0_handle_status(struct dwc3 *dwc,
 		break;
 	default:
 		return -EINVAL;
-	};
+	}
 
 	response_pkt = (__le16 *) dwc->setup_buf;
 	*response_pkt = cpu_to_le16(usb_status);
@@ -528,7 +528,7 @@ static int dwc3_ep0_handle_feature(struct dwc3 *dwc,
 
 	default:
 		return -EINVAL;
-	};
+	}
 
 	return 0;
 }
@@ -764,7 +764,7 @@ static int dwc3_ep0_std_request(struct dwc3 *dwc, struct usb_ctrlrequest *ctrl)
 		dev_vdbg(dwc->dev, "Forwarding to gadget driver\n");
 		ret = dwc3_ep0_delegate_req(dwc, ctrl);
 		break;
-	};
+	}
 
 	return ret;
 }
