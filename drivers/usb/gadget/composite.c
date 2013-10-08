@@ -423,7 +423,7 @@ static u8 encode_bMaxPower(enum usb_device_speed speed,
 		return DIV_ROUND_UP(val, 8);
 	default:
 		return DIV_ROUND_UP(val, 2);
-	};
+	}
 }
 
 static int config_buf(struct usb_configuration *config,
