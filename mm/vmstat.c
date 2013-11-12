@@ -1500,8 +1500,10 @@ static int __init setup_vmstat(void)
 	cpu_notifier_register_begin();
 	__register_cpu_notifier(&vmstat_notifier);
 
-	for_each_online_cpu(cpu)
+	for_each_online_cpu(cpu) {
 		start_cpu_timer(cpu);
+		node_set_state(cpu_to_node(cpu), N_CPU);
+	}
 	cpu_notifier_register_done();
 #endif
 #ifdef CONFIG_PROC_FS
