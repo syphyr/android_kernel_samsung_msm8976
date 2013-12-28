@@ -42,18 +42,12 @@ struct pingv6_ops {
 			     const struct net_device *dev, int strict);
 };
 
-struct ping_table {
-	struct hlist_nulls_head	hash[PING_HTABLE_SIZE];
-	rwlock_t		lock;
-};
-
 struct ping_iter_state {
 	struct seq_net_private  p;
 	int			bucket;
 };
 
 extern struct proto ping_prot;
-extern struct ping_table ping_table;
 #if IS_ENABLED(CONFIG_IPV6)
 extern struct pingv6_ops pingv6_ops;
 #endif
@@ -80,8 +74,6 @@ int  ping_recvmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		  size_t len, int noblock, int flags, int *addr_len);
 int  ping_common_sendmsg(int family, struct msghdr *msg, size_t len,
 			 void *user_icmph, size_t icmph_len);
-int  ping_v4_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
-		     size_t len);
 int  ping_v6_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *msg,
 		     size_t len);
 int  ping_queue_rcv_skb(struct sock *sk, struct sk_buff *skb);
