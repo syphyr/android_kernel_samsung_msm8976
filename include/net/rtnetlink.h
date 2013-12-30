@@ -117,10 +117,9 @@ struct rtnl_af_ops {
 					       const struct nlattr *attr);
 };
 
-extern int	__rtnl_af_register(struct rtnl_af_ops *ops);
 extern void	__rtnl_af_unregister(struct rtnl_af_ops *ops);
 
-extern int	rtnl_af_register(struct rtnl_af_ops *ops);
+extern void	rtnl_af_register(struct rtnl_af_ops *ops);
 extern void	rtnl_af_unregister(struct rtnl_af_ops *ops);
 
 
