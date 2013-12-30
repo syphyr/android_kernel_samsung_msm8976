@@ -489,9 +489,7 @@ int __init br_netlink_init(void)
 	int err;
 
 	br_mdb_init();
-	err = rtnl_af_register(&br_af_ops);
-	if (err)
-		goto out;
+	rtnl_af_register(&br_af_ops);
 
 	err = rtnl_link_register(&br_link_ops);
 	if (err)
@@ -501,7 +499,6 @@ int __init br_netlink_init(void)
 
 out_af:
 	rtnl_af_unregister(&br_af_ops);
-out:
 	br_mdb_uninit();
 	return err;
 }
