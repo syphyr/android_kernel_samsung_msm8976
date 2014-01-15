@@ -2601,16 +2601,17 @@ static int packet_release(struct socket *sock)
  */
 
 static int packet_do_bind(struct sock *sk, const char *name, int ifindex,
-			  __be16 protocol)
+			  __be16 proto)
 {
 	struct packet_sock *po = pkt_sk(sk);
 	struct net_device *dev_curr;
+	__be16 proto_curr;
+	bool need_rehook;
 	struct net_device *dev = NULL;
 	int ret = 0;
 	bool unlisted = false;
 
 	lock_sock(sk);
-
 	spin_lock(&po->bind_lock);
 	rcu_read_lock();
 
@@ -2636,40 +2637,45 @@ static int packet_do_bind(struct sock *sk, const char *name, int ifindex,
 	if (dev)
 		dev_hold(dev);
 
+	proto_curr = po->prot_hook.type;
 	dev_curr = po->prot_hook.dev;
 
-	if (po->running) {
-		rcu_read_unlock();
-		/* prevents packet_notifier() from calling
-		 * register_prot_hook()
-		 */
-		po->num = 0;
-		__unregister_prot_hook(sk, true);
-		rcu_read_lock();
-		dev_curr = po->prot_hook.dev;
-		if (dev)
-			unlisted = !dev_get_by_index_rcu(sock_net(sk),
-							 dev->ifindex);
-	}
-	BUG_ON(po->running);
-	po->num = protocol;
-	po->prot_hook.type = protocol;
+	need_rehook = proto_curr != proto || dev_curr != dev;
 
-	if (unlikely(unlisted)) {
-		dev_put(dev);
-		po->prot_hook.dev = NULL;
-		po->ifindex = -1;
-	} else {
-		po->prot_hook.dev = dev;
-		po->ifindex = dev ? dev->ifindex : 0;
-	}
+	if (need_rehook) {
+		if (po->running) {
+			rcu_read_unlock();
+			/* prevents packet_notifier() from calling
+			 * register_prot_hook()
+			 */
+			po->num = 0;
+			__unregister_prot_hook(sk, true);
+			rcu_read_lock();
+			dev_curr = po->prot_hook.dev;
+			if (dev)
+				unlisted = !dev_get_by_index_rcu(sock_net(sk),
+								 dev->ifindex);
+		}
 
+		BUG_ON(po->running);
+		po->num = proto;
+		po->prot_hook.type = proto;
+
+		if (unlikely(unlisted)) {
+			dev_put(dev);
+			po->prot_hook.dev = NULL;
+			po->ifindex = -1;
+			packet_cached_dev_reset(po);
+		} else {
+			po->prot_hook.dev = dev;
+			po->ifindex = dev ? dev->ifindex : 0;
+			packet_cached_dev_assign(po, dev);
+		}
+	}
 	if (dev_curr)
 		dev_put(dev_curr);
 
-	packet_cached_dev_assign(po, dev);
-
-	if (protocol == 0)
+	if (proto == 0 || !need_rehook)
 		goto out_unlock;
 
 	if (!unlisted && (!dev || (dev->flags & IFF_UP))) {
