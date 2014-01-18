@@ -133,7 +133,8 @@ static inline int verify_replay(struct xfrm_usersa_info *p,
 	    nla_len(rt) != sizeof(*rs))
 		return -EINVAL;
 
-	if (p->id.proto != IPPROTO_ESP)
+	/* As only ESP and AH support ESN feature. */
+	if ((p->id.proto != IPPROTO_ESP) && (p->id.proto != IPPROTO_AH))
 		return -EINVAL;
 
 	if (p->replay_window != 0)
