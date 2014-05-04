@@ -264,7 +264,7 @@ static inline bool ip_sk_use_pmtu(const struct sock *sk)
 	return inet_sk(sk)->pmtudisc < IP_PMTUDISC_PROBE;
 }
 
-static inline bool ip_sk_local_df(const struct sock *sk)
+static inline bool ip_sk_ignore_df(const struct sock *sk)
 {
 	return inet_sk(sk)->pmtudisc < IP_PMTUDISC_DO ||
 	       inet_sk(sk)->pmtudisc == IP_PMTUDISC_OMIT;
@@ -307,7 +307,7 @@ static inline void ip_select_ident_segs(struct net *net, struct sk_buff *skb,
 {
 	struct iphdr *iph = ip_hdr(skb);
 
-	if ((iph->frag_off & htons(IP_DF)) && !skb->local_df) {
+	if ((iph->frag_off & htons(IP_DF)) && !skb->ignore_df) {
 		/* This is only to work around buggy Windows95/2000
 		 * VJ compression implementations.  If the ID field
 		 * does not change, they drop every other packet in
