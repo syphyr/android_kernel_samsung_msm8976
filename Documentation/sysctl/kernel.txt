@@ -80,6 +80,7 @@ show up in /proc/sys/kernel:
 - softlockup_thresh
 - stop-a                      [ SPARC only ]
 - sysrq                       ==> Documentation/sysrq.txt
+- sysctl_writes_strict
 - tainted
 - threads-max
 - unknown_nmi_panic
@@ -727,6 +728,26 @@ This value can be used to lower the softlockup tolerance threshold.  The
 default threshold is 60 seconds.  If a cpu is locked up for 60 seconds,
 the kernel complains.  Valid values are 1-60 seconds.  Setting this
 tunable to zero will disable the softlockup detection altogether.
+
+==============================================================
+
+sysctl_writes_strict:
+
+Control how file position affects the behavior of updating sysctl values
+via the /proc/sys interface:
+
+  -1 - Legacy per-write sysctl value handling, with no printk warnings.
+       Each write syscall must fully contain the sysctl value to be
+       written, and multiple writes on the same sysctl file descriptor
+       will rewrite the sysctl value, regardless of file position.
+   0 - (default) Same behavior as above, but warn about processes that
+       perform writes to a sysctl file descriptor when the file position
+       is not 0.
+   1 - Respect file position when writing sysctl strings. Multiple writes
+       will append to the sysctl value buffer. Anything past the max length
+       of the sysctl value buffer will be ignored. Writes to numeric sysctl
+       entries must always be at file position 0 and the value must be
+       fully contained in the buffer sent in the write syscall.
 
 ==============================================================
 
