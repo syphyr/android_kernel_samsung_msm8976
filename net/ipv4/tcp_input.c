@@ -1140,7 +1140,7 @@ static int tcp_match_skb_to_sack(struct sock *sk, struct sk_buff *skb,
 		if (pkt_len >= skb->len && !in_sack)
 			return 0;
 
-		err = tcp_fragment(sk, skb, pkt_len, mss);
+		err = tcp_fragment(sk, skb, pkt_len, mss, GFP_ATOMIC);
 		if (err < 0)
 			return err;
 	}
@@ -2277,7 +2277,8 @@ static void tcp_mark_head_lost(struct sock *sk, int packets, int mark_head)
 				break;
 
 			mss = skb_shinfo(skb)->gso_size;
-			err = tcp_fragment(sk, skb, (packets - oldcnt) * mss, mss);
+			err = tcp_fragment(sk, skb, (packets - oldcnt) * mss,
+					   mss, GFP_ATOMIC);
 			if (err < 0)
 				break;
 			cnt = packets;
