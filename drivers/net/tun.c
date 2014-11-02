@@ -1347,7 +1347,7 @@ static ssize_t tun_put_user(struct tun_struct *tun,
 		if ((len -= sizeof(pi)) < 0)
 			return -EINVAL;
 
-		if (len < skb->len + vnet_hdr_sz) {
+		if (len < skb->len + vlan_hlen + vnet_hdr_sz) {
 			/* Packet will be striped */
 			pi.flags |= TUN_PKT_STRIP;
 		}
