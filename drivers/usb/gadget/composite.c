@@ -1713,6 +1713,12 @@ void composite_disconnect(struct usb_gadget *gadget)
 #ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
 	set_string_mode(0);
 #endif
+	if (cdev == NULL) {
+		WARN(1, "%s: Calling disconnect on a Gadget that is \
+			 not connected\n", __func__);
+		return;
+	}
+
 	/* REVISIT:  should we have config and device level
 	 * disconnect callbacks?
 	 */
