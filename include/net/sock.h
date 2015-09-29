@@ -741,7 +741,7 @@ static inline void __receive_sock(struct file *file)
 { }
 #endif
 
-static inline gfp_t sk_gfp_atomic(struct sock *sk, gfp_t gfp_mask)
+static inline gfp_t sk_gfp_atomic(const struct sock *sk, gfp_t gfp_mask)
 {
 	return GFP_ATOMIC | (sk->sk_allocation & __GFP_MEMALLOC);
 }
