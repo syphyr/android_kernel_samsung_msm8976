@@ -539,6 +539,13 @@ static int remap_cal_data(struct cal_block_data *cal_block)
 {
 	int ret = 0;
 
+	if (cal_block->map_data.ion_client == NULL) {
+		pr_err("%s: No ION allocation for cal data!\n",
+			__func__);
+		ret = -EINVAL;
+		goto done;
+	}
+
 	if ((cal_block->map_data.map_size > 0) &&
 		(cal_block->map_data.q6map_handle == 0)) {
 
