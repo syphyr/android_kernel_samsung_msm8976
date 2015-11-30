@@ -2099,7 +2099,7 @@ void __tcp_push_pending_frames(struct sock *sk, unsigned int cur_mss,
 		return;
 
 	if (tcp_write_xmit(sk, cur_mss, nonagle, 0,
-			   sk_gfp_atomic(sk, GFP_ATOMIC)))
+			   sk_gfp_mask(sk, GFP_ATOMIC)))
 		tcp_check_probe_timer(sk);
 }
 
@@ -3155,8 +3155,9 @@ void tcp_send_ack(struct sock *sk)
 	 * tcp_transmit_skb() will set the ownership to this
 	 * sock.
 	 */
-	buff = alloc_skb(MAX_TCP_HEADER, sk_gfp_atomic(sk, GFP_ATOMIC));
-	if (buff == NULL) {
+	buff = alloc_skb(MAX_TCP_HEADER,
+			 sk_gfp_mask(sk, GFP_ATOMIC | __GFP_NOWARN));
+	if (unlikely(buff == NULL)) {
 		inet_csk_schedule_ack(sk);
 		inet_csk(sk)->icsk_ack.ato = TCP_ATO_MIN;
 		inet_csk_reset_xmit_timer(sk, ICSK_TIME_DACK,
@@ -3170,7 +3171,7 @@ void tcp_send_ack(struct sock *sk)
 
 	/* Send it off, this clears delayed acks for us. */
 	TCP_SKB_CB(buff)->when = tcp_time_stamp;
-	tcp_transmit_skb(sk, buff, 0, sk_gfp_atomic(sk, GFP_ATOMIC));
+	tcp_transmit_skb(sk, buff, 0, (__force gfp_t)0);
 }
 
 /* This routine sends a packet with an out of date sequence
@@ -3190,7 +3191,8 @@ static int tcp_xmit_probe_skb(struct sock *sk, int urgent)
 	struct sk_buff *skb;
 
 	/* We don't queue it, tcp_transmit_skb() sets ownership. */
-	skb = alloc_skb(MAX_TCP_HEADER, sk_gfp_atomic(sk, GFP_ATOMIC));
+	skb = alloc_skb(MAX_TCP_HEADER,
+			sk_gfp_mask(sk, GFP_ATOMIC | __GFP_NOWARN));
 	if (skb == NULL)
 		return -1;
 
@@ -3202,7 +3204,7 @@ static int tcp_xmit_probe_skb(struct sock *sk, int urgent)
 	 */
 	tcp_init_nondata_skb(skb, tp->snd_una - !urgent, TCPHDR_ACK);
 	TCP_SKB_CB(skb)->when = tcp_time_stamp;
-	return tcp_transmit_skb(sk, skb, 0, GFP_ATOMIC);
+	return tcp_transmit_skb(sk, skb, 0, (__force gfp_t)0);
 }
 
 void tcp_send_window_probe(struct sock *sk)

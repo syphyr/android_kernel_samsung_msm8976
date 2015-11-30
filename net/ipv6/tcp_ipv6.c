@@ -1253,7 +1253,7 @@ static struct sock * tcp_v6_syn_recv_sock(struct sock *sk, struct sk_buff *skb,
 	newnp->pktoptions = NULL;
 	if (treq->pktopts != NULL) {
 		newnp->pktoptions = skb_clone(treq->pktopts,
-					      sk_gfp_atomic(sk, GFP_ATOMIC));
+					      sk_gfp_mask(sk, GFP_ATOMIC));
 		consume_skb(treq->pktopts);
 		treq->pktopts = NULL;
 		if (newnp->pktoptions)
@@ -1304,7 +1304,7 @@ static struct sock * tcp_v6_syn_recv_sock(struct sock *sk, struct sk_buff *skb,
 		 */
 		tcp_md5_do_add(newsk, (union tcp_md5_addr *)&newnp->daddr,
 			       AF_INET6, key->key, key->keylen,
-			       sk_gfp_atomic(sk, GFP_ATOMIC));
+			       sk_gfp_mask(sk, GFP_ATOMIC));
 	}
 #endif
 
@@ -1378,7 +1378,7 @@ static int tcp_v6_do_rcv(struct sock *sk, struct sk_buff *skb)
 					       --ANK (980728)
 	 */
 	if (np->rxopt.all)
-		opt_skb = skb_clone(skb, sk_gfp_atomic(sk, GFP_ATOMIC));
+		opt_skb = skb_clone(skb, sk_gfp_mask(sk, GFP_ATOMIC));
 
 	if (sk->sk_state == TCP_ESTABLISHED) { /* Fast path */
 		struct dst_entry *dst = sk->sk_rx_dst;
