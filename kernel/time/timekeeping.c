@@ -540,7 +540,7 @@ int timekeeping_inject_offset(struct timespec *ts)
 	struct timespec tmp;
 	int ret = 0;
 
-	if ((unsigned long)ts->tv_nsec >= NSEC_PER_SEC)
+	if (!timespec_inject_offset_valid(ts))
 		return -EINVAL;
 
 	raw_spin_lock_irqsave(&timekeeper_lock, flags);
