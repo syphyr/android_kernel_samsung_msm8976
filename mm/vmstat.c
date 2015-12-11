@@ -1413,13 +1413,14 @@ static void vm_event_state_tracer(struct work_struct *w)
 #endif /* CONFIG_PROC_FS */
 
 #ifdef CONFIG_SMP
+static struct workqueue_struct *vmstat_wq;
 static DEFINE_PER_CPU(struct delayed_work, vmstat_work);
 int sysctl_stat_interval __read_mostly = HZ;
 
 static void vmstat_update(struct work_struct *w)
 {
 	refresh_cpu_vm_stats();
-	schedule_delayed_work(this_cpu_ptr(&vmstat_work),
+	queue_delayed_work(vmstat_wq, this_cpu_ptr(&vmstat_work),
 		round_jiffies_relative(sysctl_stat_interval));
 }
 
@@ -1428,7 +1429,7 @@ static void __cpuinit start_cpu_timer(int cpu)
 	struct delayed_work *work = &per_cpu(vmstat_work, cpu);
 
 	INIT_DEFERRABLE_WORK(work, vmstat_update);
-	schedule_delayed_work_on(cpu, work, __round_jiffies_relative(HZ, cpu));
+	queue_delayed_work_on(cpu, vmstat_wq, work, __round_jiffies_relative(HZ, cpu));
 }
 
 static void vmstat_cpu_dead(int node)
@@ -1505,6 +1506,7 @@ static int __init setup_vmstat(void)
 		node_set_state(cpu_to_node(cpu), N_CPU);
 	}
 	cpu_notifier_register_done();
+	vmstat_wq = alloc_workqueue("vmstat", WQ_FREEZABLE|WQ_MEM_RECLAIM, 0);
 #endif
 #ifdef CONFIG_PROC_FS
 #ifdef CONFIG_SEC_VM_EVENT_STATE_TRACER
