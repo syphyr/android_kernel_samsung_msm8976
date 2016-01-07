@@ -109,6 +109,7 @@ struct hdd_tgt_cfg {
         bool egap_support;
 #endif
         uint32_t fine_time_measurement_cap;
+        bool bpf_enabled;
         uint8_t max_mc_addr_list;
 };
 
