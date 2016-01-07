@@ -4042,6 +4042,10 @@ eHalStatus sme_ExtScanRegisterCallback (tHalHandle hHal,
 
 #endif /* FEATURE_WLAN_EXTSCAN */
 
+eHalStatus sme_bpf_offload_register_callback(tHalHandle hal,
+			void (*pbpf_get_offload_cb)(void *,
+			struct sir_bpf_get_offload *));
+
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
 /* ---------------------------------------------------------------------------
     \fn sme_abortRoamScan
@@ -4459,6 +4463,10 @@ eHalStatus sme_remove_bssid_from_scan_list(tHalHandle hal,
 
 void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 		uint8_t *peer_mac, tANI_U16 reason, uint8_t wait_for_ack);
+
+eHalStatus sme_get_bpf_offload_capabilities(tHalHandle hal);
+eHalStatus sme_set_bpf_instructions(tHalHandle hal,
+                        struct sir_bpf_set_offload *);
 
 /**
  * sme_is_sta_key_exchange_in_progress() - checks whether the STA/P2P client
