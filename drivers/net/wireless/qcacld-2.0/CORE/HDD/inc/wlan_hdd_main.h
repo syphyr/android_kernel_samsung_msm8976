@@ -155,6 +155,8 @@
 /* Scan Req Timeout */
 #define WLAN_WAIT_TIME_SCAN_REQ 100
 
+#define WLAN_WAIT_TIME_BPF     1000
+
 #define MAX_NUMBER_OF_ADAPTERS 4
 
 #define MAX_CFG_STRING_LEN  255
@@ -304,6 +306,7 @@ extern spinlock_t hdd_context_lock;
 #define LINK_STATUS_MAGIC   0x4C4B5354   //LINKSTATUS(LNST)
 #define TEMP_CONTEXT_MAGIC 0x74656d70   // TEMP (temperature)
 #define FW_STATUS_MAGIC 0x46575354 /* FWSTATUS(FWST) */
+#define BPF_CONTEXT_MAGIC 0x4575354    /* BPF */
 
 #ifdef QCA_LL_TX_FLOW_CT
 /* MAX OS Q block time value in msec
@@ -1383,6 +1386,18 @@ struct hdd_offloaded_packets_ctx {
 };
 #endif
 
+/**
+ * struct hdd_bpf_context - hdd Context for bpf
+ * @magic: magic number
+ * @completion: Completion variable for BPF Get Capability
+ * @capability_response: capabilities response received from fw
+ */
+struct hdd_bpf_context {
+	unsigned int magic;
+	struct completion completion;
+	struct sir_bpf_get_offload capability_response;
+};
+
 /** Adapter stucture definition */
 
 struct hdd_context_s
@@ -1721,6 +1736,7 @@ struct hdd_context_s
     uint8_t supp_5g_chain_mask;
     /* Current number of TX X RX chains being used */
     enum antenna_mode current_antenna_mode;
+    bool bpf_enabled;
     /* bit map to set/reset TDLS by different sources */
     unsigned long tdls_source_bitmap;
     /* tdls source timer to enable/disable TDLS on p2p listen */
