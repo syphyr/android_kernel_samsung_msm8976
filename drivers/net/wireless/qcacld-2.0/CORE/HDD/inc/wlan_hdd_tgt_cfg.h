@@ -110,6 +110,7 @@ struct hdd_tgt_cfg {
 #endif
         uint32_t fine_time_measurement_cap;
         bool bpf_enabled;
+        uint16_t wmi_max_len;
         uint8_t max_mc_addr_list;
 };
 
