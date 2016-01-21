@@ -969,16 +969,17 @@ static int wlan_hdd_qcmbr_command(hdd_adapter_t *pAdapter, qcmbr_data_t *pqcmbr_
 
         case ATH_XIOCTL_UNIFIED_UTF_RSP: {
             pqcmbr_data->copy_to_user = 1;
+
+            spin_lock_bh(&qcmbr_queue_lock);
             if (!list_empty(&qcmbr_queue_head)) {
-                spin_lock_bh(&qcmbr_queue_lock);
                 qcmbr_buf = list_first_entry(&qcmbr_queue_head,
                                              qcmbr_queue_t, list);
                 list_del(&qcmbr_buf->list);
-                spin_unlock_bh(&qcmbr_queue_lock);
                 ret = 0;
             } else {
                 ret = -1;
             }
+            spin_unlock_bh(&qcmbr_queue_lock);
 
             if (!ret) {
                 memcpy(pqcmbr_data->buf, qcmbr_buf->utf_buf,
@@ -1011,7 +1012,7 @@ static int wlan_hdd_qcmbr_compat_ioctl(hdd_adapter_t *pAdapter,
     }
 
     ret = wlan_hdd_qcmbr_command(pAdapter, qcmbr_data);
-    if (qcmbr_data->copy_to_user) {
+    if ((ret == 0) && qcmbr_data->copy_to_user) {
         ret = copy_to_user(ifr->ifr_data, qcmbr_data->buf,
                            (MAX_UTF_LENGTH + 4));
     }
@@ -1043,7 +1044,7 @@ static int wlan_hdd_qcmbr_ioctl(hdd_adapter_t *pAdapter, struct ifreq *ifr)
     }
 
     ret = wlan_hdd_qcmbr_command(pAdapter, qcmbr_data);
-    if (qcmbr_data->copy_to_user) {
+    if ((ret == 0) && qcmbr_data->copy_to_user) {
         ret = copy_to_user(ifr->ifr_data, qcmbr_data->buf,
                            (MAX_UTF_LENGTH + 4));
     }
