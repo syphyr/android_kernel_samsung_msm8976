@@ -9128,6 +9128,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
     hddLog(LOG1, FL("fine_time_measurement_cap: 0x%x"),
              hdd_ctx->cfg_ini->fine_time_meas_cap);
     hdd_ctx->bpf_enabled = cfg->bpf_enabled;
+    hdd_ctx->wmi_max_len = cfg->wmi_max_len;
     hdd_ctx->max_mc_addr_list = cfg->max_mc_addr_list;
 }
 
