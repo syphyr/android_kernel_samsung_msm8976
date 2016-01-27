@@ -283,6 +283,7 @@
 
 #include <asm/uaccess.h>
 #include <asm/ioctls.h>
+#include <asm/unaligned.h>
 
 int sysctl_tcp_fin_timeout __read_mostly = TCP_FIN_TIMEOUT;
 
@@ -2799,7 +2800,7 @@ void tcp_get_info(struct sock *sk, struct tcp_info *info)
 
 	do {
 		start = u64_stats_fetch_begin_irq(&tp->syncp);
-		info->tcpi_bytes_acked = tp->bytes_acked;
+		put_unaligned(tp->bytes_acked, &info->tcpi_bytes_acked);
 	} while (u64_stats_fetch_retry_irq(&tp->syncp, start));
 }
 EXPORT_SYMBOL_GPL(tcp_get_info);
