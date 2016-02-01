@@ -4491,4 +4491,6 @@ bool sme_is_sta_key_exchange_in_progress(tHalHandle hal, uint8_t session_id);
 eHalStatus sme_create_mon_session(tHalHandle hal_handle, uint8_t *bssid);
 eHalStatus sme_register_p2p_ack_ind_callback(tHalHandle hal,
 					sir_p2p_ack_ind_callback callback);
+void sme_update_fine_time_measurement_capab(tHalHandle hal, uint32_t val);
+
 #endif //#if !defined( __SME_API_H )
