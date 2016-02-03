@@ -488,7 +488,7 @@ ol_tx_classify(
              * It is illegitimate to send unicast data if there is no peer
              * to send it to.
              */
-            VOS_TRACE(VOS_MODULE_ID_TXRX, VOS_TRACE_LEVEL_ERROR,
+            VOS_TRACE(VOS_MODULE_ID_TXRX, VOS_TRACE_LEVEL_INFO,
                 "Error: vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x) "
                 "trying to send unicast tx data frame to an unknown peer\n",
                 vdev,
