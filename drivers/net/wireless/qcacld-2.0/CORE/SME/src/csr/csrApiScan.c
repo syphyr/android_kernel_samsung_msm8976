@@ -345,11 +345,11 @@ eHalStatus csrQueueScanRequest(tpAniSirGlobal pMac, tANI_U8 sessionId,
      */
 
     if(csrIsStaSessionConnected(pMac) &&
-       !csrIsP2pSessionConnected(pMac))
+       !csrIsP2pOrSapSessionConnected(pMac))
     {
       nNumChanCombinedConc = pMac->roam.configParam.nNumStaChanCombinedConc;
     }
-    else if(csrIsP2pSessionConnected(pMac))
+    else if(csrIsP2pOrSapSessionConnected(pMac))
     {
       nNumChanCombinedConc = pMac->roam.configParam.nNumP2PChanCombinedConc;
     }
@@ -361,7 +361,7 @@ eHalStatus csrQueueScanRequest(tpAniSirGlobal pMac, tANI_U8 sessionId,
             eCSR_NEIGHBOR_ROAM_STATE_CFG_CHAN_LIST_SCAN))) &&
 #endif
          (pScanCmd->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
-            (csrIsP2pSessionConnected(pMac)) )
+            (csrIsP2pOrSapSessionConnected(pMac)))
     {
         tCsrScanRequest scanReq;
         tANI_U8 numChn = pScanCmd->u.scanCmd.u.scanRequest.ChannelInfo.numOfChannels;
@@ -5420,7 +5420,7 @@ static tANI_BOOLEAN csrScanProcessScanResults( tpAniSirGlobal pMac, tSmeCmd *pCo
                        eCSR_NEIGHBOR_ROAM_STATE_CFG_CHAN_LIST_SCAN))) &&
 #endif
             (pCommand->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
-            (csrIsP2pSessionConnected(pMac)))
+            (csrIsP2pOrSapSessionConnected(pMac)))
         {
             /* if active connected sessions present then continue to split scan
              * with specified interval between consecutive scans */
@@ -6875,11 +6875,11 @@ static void csrStaApConcTimerHandler(void *pv)
          */
 
         if((csrIsStaSessionConnected(pMac) &&
-           !csrIsP2pSessionConnected(pMac)))
+           !csrIsP2pOrSapSessionConnected(pMac)))
         {
            nNumChanCombinedConc = pMac->roam.configParam.nNumStaChanCombinedConc;
         }
-        else if(csrIsP2pSessionConnected(pMac))
+        else if(csrIsP2pOrSapSessionConnected(pMac))
         {
            nNumChanCombinedConc = pMac->roam.configParam.nNumP2PChanCombinedConc;
         }
@@ -6893,7 +6893,7 @@ static void csrStaApConcTimerHandler(void *pv)
                      eCSR_NEIGHBOR_ROAM_STATE_CFG_CHAN_LIST_SCAN))) &&
 #endif
                   (pScanCmd->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
-              (csrIsP2pSessionConnected(pMac))))
+              (csrIsP2pOrSapSessionConnected(pMac))))
         {
              vos_mem_set(&scanReq, sizeof(tCsrScanRequest), 0);
 
