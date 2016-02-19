@@ -3594,8 +3594,7 @@ enum dot11p_mode {
   Type declarations
   -------------------------------------------------------------------------*/
 
-typedef struct
-{
+struct hdd_config {
    //Bitmap to track what is explicitly configured
    DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
 
@@ -4313,7 +4312,9 @@ typedef struct
    bool                        bug_on_reinit_failure;
    /* parameter for defer timer for enabling TDLS on p2p listen */
    uint16_t                    tdls_enable_defer_time;
-} hdd_config_t;
+};
+
+typedef struct hdd_config hdd_config_t;
 
 #ifdef WLAN_FEATURE_MBSSID
 typedef struct mbssid_sap_dyn_ini_config {
