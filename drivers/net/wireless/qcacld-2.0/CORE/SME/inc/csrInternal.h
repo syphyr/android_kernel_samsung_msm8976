@@ -710,6 +710,7 @@ typedef struct tagCsrConfig
     v_U16_t pkt_err_disconn_th;
     bool enable_fatal_event;
     bool vendor_vht_for_24ghz_sap;
+    struct csr_sta_roam_policy_params sta_roam_policy;
 }tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo

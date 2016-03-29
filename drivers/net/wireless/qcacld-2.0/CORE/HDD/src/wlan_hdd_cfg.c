@@ -7104,6 +7104,10 @@ VOS_STATUS hdd_set_sme_config( hdd_context_t *pHddCtx )
                           pConfig->enable_fatal_event;
    smeConfig->csrConfig.sendDeauthBeforeCon = pConfig->sendDeauthBeforeCon;
    smeConfig->csrConfig.ignorePeerErpInfo = pConfig->ignorePeerErpInfo;
+   smeConfig->csrConfig.sta_roam_policy_params.dfs_mode =
+       CSR_STA_ROAM_POLICY_DFS_ENABLED;
+   smeConfig->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
+
    halStatus = sme_UpdateConfig( pHddCtx->hHal, smeConfig);
    if ( !HAL_STATUS_SUCCESS( halStatus ) )
    {
