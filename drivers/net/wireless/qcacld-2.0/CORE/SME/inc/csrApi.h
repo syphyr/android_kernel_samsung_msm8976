@@ -1104,6 +1104,30 @@ typedef struct tagCsrNeighborRoamConfigParams
 }tCsrNeighborRoamConfigParams;
 #endif
 
+/**
+ * enum sta_roam_policy_dfs_mode - state of DFS mode for STA ROME policy
+ * @CSR_STA_ROAM_POLICY_NONE: DFS mode attribute is not valid
+ * @CSR_STA_ROAM_POLICY_DFS_ENABLED:  DFS mode is enabled
+ * @CSR_STA_ROAM_POLICY_DFS_DISABLED: DFS mode is disabled
+ * @CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE: Deprioritize DFS channels in scanning
+ */
+enum sta_roam_policy_dfs_mode {
+	CSR_STA_ROAM_POLICY_NONE,
+	CSR_STA_ROAM_POLICY_DFS_ENABLED,
+	CSR_STA_ROAM_POLICY_DFS_DISABLED,
+	CSR_STA_ROAM_POLICY_DFS_DEPRIORITIZE
+};
+
+/**
+ * struct csr_sta_roam_policy_params - sta roam policy params for station
+ * @dfs_mode: tell is DFS channels needs to be skipped while scanning
+ * @skip_unsafe_channels: tells if unsafe channels needs to be skip in scanning
+ */
+struct csr_sta_roam_policy_params {
+	enum sta_roam_policy_dfs_mode dfs_mode;
+	bool skip_unsafe_channels;
+};
+
 typedef struct tagCsrConfigParam
 {
     tANI_U32 FragmentationThreshold;
@@ -1301,6 +1325,7 @@ typedef struct tagCsrConfigParam
     v_U16_t    pkt_err_disconn_th;
     int8_t    first_scan_bucket_threshold;
     bool    enable_fatal_event;
+    struct csr_sta_roam_policy_params sta_roam_policy_params;
 }tCsrConfigParam;
 
 //Tush
