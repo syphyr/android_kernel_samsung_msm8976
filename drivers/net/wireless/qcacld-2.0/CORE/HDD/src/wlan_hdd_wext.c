@@ -1510,6 +1510,10 @@ void hdd_clearRoamProfileIe( hdd_adapter_t *pAdapter)
    int i = 0;
    hdd_wext_state_t *pWextState= WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
+   if (!pWextState) {
+        hddLog(LOGE, FL("ERROR: pWextState not found"));
+        return;
+   }
    /* clear WPA/RSN/WSC IE information in the profile */
    pWextState->roamProfile.nWPAReqIELength = 0;
    pWextState->roamProfile.pWPAReqIE = (tANI_U8 *)NULL;
@@ -12180,6 +12184,10 @@ int hdd_set_wext(hdd_adapter_t *pAdapter)
 
     pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
+    if (!pwextBuf) {
+        hddLog(LOGE, FL("ERROR: pwextBuf not found"));
+        return VOS_STATUS_E_FAILURE;
+    }
     // Now configure the roaming profile links. To SSID and bssid.
     pwextBuf->roamProfile.SSIDs.numOfSSIDs = 0;
     pwextBuf->roamProfile.SSIDs.SSIDList = &pHddStaCtx->conn_info.SSID;
@@ -12224,6 +12232,10 @@ int hdd_register_wext(struct net_device *dev)
 
    ENTER();
 
+    if (!pwextBuf) {
+        hddLog(LOGE, FL("ERROR: pwextBuf not found"));
+        return eHAL_STATUS_FAILURE;
+    }
     // Zero the memory.  This zeros the profile structure.
    memset(pwextBuf, 0,sizeof(hdd_wext_state_t));
 
