@@ -1888,4 +1888,11 @@ int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason);
 
 void hdd_get_bpf_offload_cb(void *hdd_context, struct sir_bpf_get_offload *);
 void hdd_init_bpf_completion(void);
+
+#ifdef WLAN_FEATURE_LINK_LAYER_STATS
+void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter);
+#else
+static inline void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter) {}
+#endif
+
 #endif
