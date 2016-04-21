@@ -108,6 +108,7 @@ struct hdd_tgt_cfg {
 #ifdef FEATURE_GREEN_AP
         bool egap_support;
 #endif
+        uint8_t max_mc_addr_list;
 };
 
 struct hdd_dfs_radar_ind {
