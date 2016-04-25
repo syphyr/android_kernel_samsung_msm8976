@@ -467,7 +467,7 @@ eHalStatus csrUpdateChannelList(tpAniSirGlobal pMac)
     tANI_U8 i;
     tANI_U8 channel_state;
     uint16_t unsafe_chan[NUM_20MHZ_RF_CHANNELS];
-    uint16_t unsafe_chan_cnt;
+    uint16_t unsafe_chan_cnt = 0;
     uint16_t cnt = 0;
     uint8_t  channel;
     bool is_unsafe_chan;
@@ -17347,7 +17347,7 @@ eHalStatus csrRoamOffloadScan(tpAniSirGlobal pMac, tANI_U8 sessionId,
    struct roam_ext_params *roam_params_src;
    uint8_t op_channel;
    uint16_t  unsafe_chan[NUM_20MHZ_RF_CHANNELS];
-   uint16_t  unsafe_chan_cnt;
+   uint16_t  unsafe_chan_cnt = 0;
    uint16_t  cnt = 0;
    bool      is_unsafe_chan;
 
