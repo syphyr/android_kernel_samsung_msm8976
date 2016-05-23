@@ -181,6 +181,20 @@
 #define WMA_MCAST_IPV4_MAC_ADDR (0x01)
 #define WMA_MCAST_IPV6_MAC_ADDR (0x33)
 
+/*
+ * ds_mode: distribution system mode
+ * @IEEE80211_NO_DS: NO DS at either side
+ * @IEEE80211_TO_DS: DS at receiver side
+ * @IEEE80211_FROM_DS: DS at sender side
+ * @IEEE80211_DS_TO_DS: DS at both sender and revceiver side
+ */
+enum ds_mode {
+	IEEE80211_NO_DS,
+	IEEE80211_TO_DS,
+	IEEE80211_FROM_DS,
+	IEEE80211_DS_TO_DS
+};
+
 typedef struct probeTime_dwellTime {
 	u_int8_t dwell_time;
 	u_int8_t probe_time;
