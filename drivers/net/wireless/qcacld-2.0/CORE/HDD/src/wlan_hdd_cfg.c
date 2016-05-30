@@ -4388,6 +4388,12 @@ REG_TABLE_ENTRY g_registry_table[] =
                 CFG_ARP_AC_CATEGORY_MIN,
                 CFG_ARP_AC_CATEGORY_MAX),
 
+   REG_VARIABLE(CFG_SAP_FORCE_11N_FOR_11AC_NAME, WLAN_PARAM_Integer,
+                hdd_config_t, sap_force_11n_for_11ac,
+                VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+                CFG_SAP_FORCE_11N_FOR_11AC_DEFAULT,
+                CFG_SAP_FORCE_11N_FOR_11AC_MIN,
+                CFG_SAP_FORCE_11N_FOR_11AC_MAX)
 };
 
 #ifdef WLAN_FEATURE_MBSSID
@@ -5183,6 +5189,10 @@ void print_hdd_cfg(hdd_context_t *pHddCtx)
   hddLog(LOG2, "Name = [%s] Value = [%u]",
           CFG_ENABLE_VHT_DYNAMIC_STA_CHAINMASK,
           pHddCtx->cfg_ini->enable_dynamic_sta_chainmask);
+
+  hddLog(LOG2, "Name = [%s] Value = [%u]",
+                CFG_SAP_FORCE_11N_FOR_11AC_NAME,
+                pHddCtx->cfg_ini->sap_force_11n_for_11ac);
 }
 
 #define CFG_VALUE_MAX_LEN 256
