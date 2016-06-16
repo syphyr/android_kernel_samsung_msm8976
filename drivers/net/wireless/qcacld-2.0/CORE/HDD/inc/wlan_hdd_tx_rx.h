@@ -258,6 +258,16 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 		enum netif_action_type action, enum netif_reason_type reason);
 
 /**
+ * hdd_rst_tcp_delack() - Reset tcp delack value to original level.
+ * @hdd_context_t : HDD context
+ *
+ * HDD will call this API on unloading path to clear delack value.
+ *
+ * Return: None
+ */
+void hdd_rst_tcp_delack(hdd_context_t *hdd_ctx);
+
+/**
  * hdd_mon_rx_packet_cbk() - Receive callback registered with TL.
  * @vosContext: [in] pointer to VOS context
  * @staId:      [in] Station Id

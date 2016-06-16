@@ -1853,6 +1853,7 @@ VOS_STATUS hdd_wlan_shutdown(void)
            vos_timer_getCurrentState(&pHddCtx->bus_bw_timer))
    {
       vos_timer_stop(&pHddCtx->bus_bw_timer);
+      hdd_rst_tcp_delack(pHddCtx);
    }
 #endif
 
