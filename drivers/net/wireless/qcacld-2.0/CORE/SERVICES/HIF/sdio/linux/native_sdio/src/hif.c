@@ -2775,6 +2775,9 @@ static int hif_sdio_device_resume(struct device *dev)
 	return hifDeviceResume(dev);
 }
 
+#endif
+#endif
+
 /**
  * hif_reset_target() - Reset target device
  * @hif_device: pointer to hif_device structure
@@ -2817,5 +2820,3 @@ done:
 	sdio_release_host(hif_device->func);
 	return ret;
 }
-#endif
-#endif
