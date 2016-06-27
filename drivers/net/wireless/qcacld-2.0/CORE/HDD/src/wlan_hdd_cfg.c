@@ -4370,6 +4370,13 @@ REG_TABLE_ENTRY g_registry_table[] =
                 CFG_TDLS_ENABLE_DEFER_TIMER_DEFAULT,
                 CFG_TDLS_ENABLE_DEFER_TIMER_MIN,
                 CFG_TDLS_ENABLE_DEFER_TIMER_MAX),
+
+   REG_VARIABLE(CFG_RX_WAKELOCK_TIMEOUT_NAME, WLAN_PARAM_Integer,
+                hdd_config_t, rx_wakelock_timeout,
+                VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+                CFG_RX_WAKELOCK_TIMEOUT_DEFAULT,
+                CFG_RX_WAKELOCK_TIMEOUT_MIN,
+                CFG_RX_WAKELOCK_TIMEOUT_MAX)
 };
 
 #ifdef WLAN_FEATURE_MBSSID
