@@ -3604,6 +3604,11 @@ enum dot11p_mode {
 #define CFG_BPF_PACKET_FILTER_OFFLOAD_MAX       (1)
 #define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
 
+#define CFG_RX_WAKELOCK_TIMEOUT_NAME         "rx_wakelock_timeout"
+#define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT      (50)
+#define CFG_RX_WAKELOCK_TIMEOUT_MIN          (0)
+#define CFG_RX_WAKELOCK_TIMEOUT_MAX          (100)
+
 /*
  * <ini>
  * arp_ac_category - ARP access category
@@ -4355,6 +4360,7 @@ struct hdd_config {
    uint16_t                    tdls_enable_defer_time;
 
    bool bpf_packet_filter_enable;
+   uint32_t                    rx_wakelock_timeout;
    uint32_t                    arp_ac_category;
 };
 
