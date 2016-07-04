@@ -20520,6 +20520,7 @@ static int wma_wow_wakeup_host_event(void *handle, u_int8_t *event,
 			wma_wow_wake_reason_str(wake_info->wake_reason, wma),
 			wake_info->wake_reason,
 			wake_info->vdev_id);
+		vos_wow_wakeup_host_event(wake_info->wake_reason);
 	}
 
 	vos_event_set(&wma->wma_resume_event);

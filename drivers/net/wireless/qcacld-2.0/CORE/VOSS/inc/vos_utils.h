@@ -184,4 +184,16 @@ v_U8_t vos_get_mmie_size(void);
 eHalStatus vos_send_flush_logs_cmd_to_fw(tpAniSirGlobal pMac);
 int vos_status_to_os_return(VOS_STATUS status);
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+void vos_wow_wakeup_host_event(uint8_t wow_wakeup_cause);
+#else
+static inline
+void vos_tdls_tx_rx_mgmt_event(uint8_t event_id, uint8_t tx_rx,
+			uint8_t type, uint8_t sub_type, uint8_t *peer_mac)
+
+{
+	return;
+}
+#endif
+
 #endif // #if !defined __VOSS_UTILS_H
