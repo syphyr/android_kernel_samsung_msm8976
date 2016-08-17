@@ -3625,6 +3625,15 @@ enum dot11p_mode {
 #define CFG_SAP_TX_LEAKAGE_THRESHOLD_MAX     (1000)
 #define CFG_SAP_TX_LEAKAGE_THRESHOLD_DEFAULT (310)
 
+/*
+ * 0: Disable BPF packet filter
+ * 1: Enable BPF packet filter
+ */
+#define CFG_BPF_PACKET_FILTER_OFFLOAD           "gBpfFilterEnable"
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_MIN       (0)
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_MAX       (1)
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
+
 #define CFG_RX_WAKELOCK_TIMEOUT_NAME         "rx_wakelock_timeout"
 #define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT      (50)
 #define CFG_RX_WAKELOCK_TIMEOUT_MIN          (0)
@@ -4379,6 +4388,8 @@ struct hdd_config {
    bool                        bug_on_reinit_failure;
    /* parameter for defer timer for enabling TDLS on p2p listen */
    uint16_t                    tdls_enable_defer_time;
+
+   bool                        bpf_packet_filter_enable;
    bool                        enable_dynamic_sta_chainmask;
    uint32_t                    rx_wakelock_timeout;
    uint32_t                    arp_ac_category;
