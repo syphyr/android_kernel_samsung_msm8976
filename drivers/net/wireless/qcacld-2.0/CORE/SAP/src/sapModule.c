@@ -4024,3 +4024,28 @@ VOS_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 	return VOS_STATUS_SUCCESS;
 }
 
+/*
+ * wlansap_set_invalid_session() - set session ID to invalid
+ * @pctx: pointer of global context
+ *
+ * This function sets session ID to invalid
+ *
+ * Return: VOS_STATUS
+ */
+VOS_STATUS
+wlansap_set_invalid_session(v_PVOID_t pctx)
+{
+	ptSapContext psapctx;
+	psapctx = VOS_GET_SAP_CB(pctx);
+	if ( NULL == psapctx) {
+		VOS_TRACE( VOS_MODULE_ID_SAP, VOS_TRACE_LEVEL_ERROR,
+			FL("Invalid SAP pointer from pctx"));
+		return VOS_STATUS_E_FAILURE;
+	}
+
+	psapctx->sessionId = CSR_SESSION_ID_INVALID;
+	psapctx->isSapSessionOpen = eSAP_FALSE;
+
+	return VOS_STATUS_SUCCESS;
+}
+
