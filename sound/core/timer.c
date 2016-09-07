@@ -35,6 +35,9 @@
 #include <sound/initval.h>
 #include <linux/kmod.h>
 
+/* internal flags */
+#define SNDRV_TIMER_IFLG_PAUSED		0x00010000
+
 #if defined(CONFIG_SND_HRTIMER) || defined(CONFIG_SND_HRTIMER_MODULE)
 #define DEFAULT_TIMER_LIMIT 4
 #elif defined(CONFIG_SND_RTCTIMER) || defined(CONFIG_SND_RTCTIMER_MODULE)
@@ -618,6 +621,10 @@ static int snd_timer_stop1(struct snd_timer_instance *timeri, bool stop)
 		}
 	}
 	timeri->flags &= ~(SNDRV_TIMER_IFLG_RUNNING | SNDRV_TIMER_IFLG_START);
+	if (stop)
+		timeri->flags &= ~SNDRV_TIMER_IFLG_PAUSED;
+	else
+		timeri->flags |= SNDRV_TIMER_IFLG_PAUSED;
 	snd_timer_notify1(timeri, stop ? SNDRV_TIMER_EVENT_STOP :
 			  SNDRV_TIMER_EVENT_PAUSE);
  unlock:
@@ -678,6 +685,10 @@ int snd_timer_stop(struct snd_timer_instance *timeri)
  */
 int snd_timer_continue(struct snd_timer_instance *timeri)
 {
+	/* timer can continue only after pause */
+	if (!(timeri->flags & SNDRV_TIMER_IFLG_PAUSED))
+		return -EINVAL;
+
 	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
 		return snd_timer_start_slave(timeri, false);
 	else
@@ -1907,6 +1918,9 @@ static int snd_timer_user_continue(struct file *file)
 	tu = file->private_data;
 	if (!tu->timeri)
 		return -EBADFD;
+	/* start timer instead of continue if it's not used before */
+	if (!(tu->timeri->flags & SNDRV_TIMER_IFLG_PAUSED))
+		return snd_timer_user_start(file);
 	tu->timeri->lost = 0;
 	return (err = snd_timer_continue(tu->timeri)) < 0 ? err : 0;
 }
