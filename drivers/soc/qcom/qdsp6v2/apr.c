@@ -320,6 +320,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 	uint16_t dest_id;
 	uint16_t client_id;
 	uint16_t w_len;
+	int rc;
 	unsigned long flags;
 	static DEFINE_RATELIMIT_STATE(rl, HZ/2, 1);
 
@@ -361,12 +362,21 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 	hdr->dest_domain = svc->dest_domain;
 	hdr->dest_svc = svc->id;
 
-	w_len = apr_tal_write(clnt->handle, buf, hdr->pkt_size);
-	if (w_len != hdr->pkt_size)
-		pr_err("Unable to write APR pkt successfully: %d\n", w_len);
+	rc = apr_tal_write(clnt->handle, buf, hdr->pkt_size);
+	if (rc >= 0) {
+		w_len = rc;
+		if (w_len != hdr->pkt_size) {
+			pr_err("%s: Unable to write whole APR pkt successfully: %d\n",
+			       __func__, rc);
+			rc = -EINVAL;
+		}
+	} else {
+		pr_err("%s: Write APR pkt failed with error %d\n",
+			__func__, rc);
+	}
 	spin_unlock_irqrestore(&svc->w_lock, flags);
 
-	return w_len;
+	return rc;
 }
 
 struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
