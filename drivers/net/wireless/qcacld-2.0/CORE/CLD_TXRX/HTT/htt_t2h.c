@@ -90,6 +90,8 @@ htt_t2h_mac_addr_deswizzle(u_int8_t *tgt_mac_addr, u_int8_t *buffer)
 
 #if defined(CONFIG_HL_SUPPORT)
 #define HTT_RX_FRAG_SET_LAST_MSDU(pdev, msg) /* no-op */
+#define HTT_FAIL_NOTIFY_BREAK_CHECK(status) \
+	((status) == htt_tx_status_fail_notify)
 #else
 static void HTT_RX_FRAG_SET_LAST_MSDU(
     struct htt_pdev_t *pdev, adf_nbuf_t msg)
@@ -135,6 +137,8 @@ static void HTT_RX_FRAG_SET_LAST_MSDU(
     rx_desc->msdu_end.last_msdu = 1;
     adf_nbuf_map(pdev->osdev, msdu, ADF_OS_DMA_FROM_DEVICE);
 }
+
+#define HTT_FAIL_NOTIFY_BREAK_CHECK(status)  0
 #endif /* CONFIG_HL_SUPPORT */
 
 #define MAX_TARGET_TX_CREDIT    204800
@@ -788,6 +792,19 @@ if (adf_os_unlikely(pdev->rx_ring.rx_reset)) {
             }
 
             if (pdev->cfg.is_high_latency) {
+                /*
+                 * For regular frms in HL case, frms have already been
+                 * freed and tx credit has been updated. FW indicates
+                 * special message for failure MSDUs with status type
+                 * htt_tx_status_fail_notify. Once such message was
+                 * received, just break here.
+                 */
+                if (ol_cfg_tx_free_at_download(pdev->ctrl_pdev) &&
+                    HTT_FAIL_NOTIFY_BREAK_CHECK(status)) {
+                    adf_os_print("HTT TX COMPL for failed data frm.\n");
+                    break;
+                }
+
                 old_credit = adf_os_atomic_read(&pdev->htt_tx_credit.target_delta);
                 if (((old_credit + num_msdus) > MAX_TARGET_TX_CREDIT) ||
                     ((old_credit + num_msdus) < -MAX_TARGET_TX_CREDIT)) {
