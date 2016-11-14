@@ -1077,7 +1077,7 @@ static int bm_rw(struct drbd_conf *mdev, int rw, unsigned flags, unsigned lazy_w
 		.done = 0,
 		.flags = flags,
 		.error = 0,
-		.kref = { ATOMIC_INIT(2) },
+		.kref = KREF_INIT(2),
 	};
 
 	if (!get_ldev_if_state(mdev, D_ATTACHING)) {  /* put is in bm_aio_ctx_destroy() */
