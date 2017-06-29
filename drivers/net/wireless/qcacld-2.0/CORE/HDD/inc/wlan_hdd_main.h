@@ -117,7 +117,7 @@
 /** Maximum time(ms)to wait for disconnect to complete **/
 #define WLAN_WAIT_TIME_DISCONNECT  5000
 #define WLAN_WAIT_TIME_STATS       800
-#define WLAN_WAIT_TIME_POWER       800
+#define WLAN_WAIT_TIME_POWER       5000
 #define WLAN_WAIT_TIME_COUNTRY     1000
 #define WLAN_WAIT_TIME_LINK_STATUS 800
 /* Amount of time to wait for sme close session callback.
