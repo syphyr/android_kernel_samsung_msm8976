@@ -633,9 +633,10 @@ static long msm_private_ioctl(struct file *file, void *fh,
 	unsigned long spin_flags = 0;
 	struct msm_sd_subdev *msm_sd;
 
-	switch(cmd) {
+	switch (cmd) {
 	case MSM_CAM_V4L2_IOCTL_NOTIFY:
 	case MSM_CAM_V4L2_IOCTL_CMD_ACK:
+	case MSM_CAM_V4L2_IOCTL_NOTIFY_DEBUG:
 	case MSM_CAM_V4L2_IOCTL_NOTIFY_ERROR:
 		break;
 	default:
