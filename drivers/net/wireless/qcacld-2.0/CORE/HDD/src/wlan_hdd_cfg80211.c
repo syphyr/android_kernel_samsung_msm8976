@@ -5950,7 +5950,7 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx, int indType,
     case SIR_HAL_LL_STATS_RESULTS_RSP:
         {
             hddLog(VOS_TRACE_LEVEL_INFO,
-                 "LL_STATS RESP paramID = 0x%x, ifaceId = %u respId = %u, moreResultToFollow = %u, num radio = %u result = %p",
+                 "LL_STATS RESP paramID = 0x%x, ifaceId = %u respId = %u, moreResultToFollow = %u, num radio = %u result = %pK",
                  linkLayerStatsResults->paramId, linkLayerStatsResults->ifaceId,
                  linkLayerStatsResults->rspId,
                  linkLayerStatsResults->moreResultToFollow,
@@ -13238,7 +13238,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
         return -EINVAL;
     }
 
-    hddLog(LOG2, FL("pAdapter = %p, device mode %s(%d)"),
+    hddLog(LOG2, FL("pAdapter = %pK, device mode %s(%d)"),
            pAdapter, hdd_device_mode_to_string(pAdapter->device_mode),
            pAdapter->device_mode);
 
@@ -15696,7 +15696,7 @@ static eHalStatus hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
     }
 
     hddLog(VOS_TRACE_LEVEL_INFO,
-            "%s called with halHandle = %p, pContext = %p,"
+            "%s called with halHandle = %pK, pContext = %pK,"
             "scanID = %d, returned status = %d",
             __func__, halHandle, pContext, (int) scanId, (int) status);
 
@@ -15855,7 +15855,7 @@ bool hdd_isConnectionInProgress(hdd_context_t *pHddCtx)
 				(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
 					conn_info.connState)) {
 				hddLog(LOGE,
-					FL("%p(%d) Connection is in progress"),
+					FL("%pK(%d) Connection is in progress"),
 					WLAN_HDD_GET_STATION_CTX_PTR(pAdapter),
 					pAdapter->sessionId);
 				return true;
@@ -15865,7 +15865,7 @@ bool hdd_isConnectionInProgress(hdd_context_t *pHddCtx)
 				WLAN_HDD_GET_HAL_CTX(pAdapter), pAdapter->sessionId))
 			{
 				hddLog(VOS_TRACE_LEVEL_ERROR,
-				"%s: %p(%d) Reassociation is in progress", __func__,
+				"%s: %pK(%d) Reassociation is in progress", __func__,
 				WLAN_HDD_GET_STATION_CTX_PTR(pAdapter), pAdapter->sessionId);
 				return VOS_TRUE;
 			}
@@ -19753,7 +19753,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy, struct net_device 
     }
 
     if (!pmksa->bssid || !pmksa->pmkid) {
-        hddLog(LOGE, FL("pmksa->bssid(%p) or pmksa->pmkid(%p) is NULL"),
+        hddLog(LOGE, FL("pmksa->bssid(%pK) or pmksa->pmkid(%pK) is NULL"),
                pmksa->bssid, pmksa->pmkid);
         return -EINVAL;
     }
@@ -20118,7 +20118,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
            (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState))
     {
         hddLog(VOS_TRACE_LEVEL_ERROR,
-                "%s: %p(%d) Connection in progress: sched_scan_start denied (EBUSY)",
+                "%s: %pK(%d) Connection in progress: sched_scan_start denied (EBUSY)",
                __func__,
                 WLAN_HDD_GET_STATION_CTX_PTR(pAdapter), pAdapter->sessionId);
         return -EBUSY;
@@ -21920,7 +21920,7 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
 
     if (!buf || !buf_len) {
         VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_ERROR,
-                  "%s: buf or buf_len invalid, buf = %p buf_len = %zu",
+                  "%s: buf or buf_len invalid, buf = %pK buf_len = %zu",
                   __func__, buf, buf_len);
         return;
     }
