@@ -2782,9 +2782,9 @@ static void tcp_fastretrans_alert(struct sock *sk, int pkts_acked,
 	int newly_acked_sacked = 0;
 	int fast_rexmit = 0;
 
-	if (WARN_ON(!tp->packets_out && tp->sacked_out))
+	if (!tp->packets_out && tp->sacked_out)
 		tp->sacked_out = 0;
-	if (WARN_ON(!tp->sacked_out && tp->fackets_out))
+	if (!tp->sacked_out && tp->fackets_out)
 		tp->fackets_out = 0;
 
 	/* Now state machine starts.
