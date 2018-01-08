@@ -392,6 +392,11 @@ static void cap_cred_free(struct cred *cred)
 {
 }
 
+static void cap_cred_getsecid(const struct cred *c, u32 *secid)
+{
+	*secid = 0;
+}
+
 static int cap_cred_prepare(struct cred *new, const struct cred *old, gfp_t gfp)
 {
 	return 0;
@@ -1012,6 +1017,7 @@ void __init security_fixup_ops(struct security_operations *ops)
 	set_to_cap_if_null(ops, task_free);
 	set_to_cap_if_null(ops, cred_alloc_blank);
 	set_to_cap_if_null(ops, cred_free);
+	set_to_cap_if_null(ops, cred_getsecid);
 	set_to_cap_if_null(ops, cred_prepare);
 	set_to_cap_if_null(ops, cred_transfer);
 	set_to_cap_if_null(ops, kernel_act_as);
