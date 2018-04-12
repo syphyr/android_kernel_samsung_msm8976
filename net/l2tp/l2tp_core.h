@@ -237,7 +237,6 @@ struct l2tp_session *l2tp_session_get_by_ifname(const struct net *net,
 						const char *ifname,
 						bool do_ref);
 extern struct l2tp_tunnel *l2tp_tunnel_find(struct net *net, u32 tunnel_id);
-extern struct l2tp_tunnel *l2tp_tunnel_find_nth(struct net *net, int nth);
 
 extern int l2tp_tunnel_create(struct net *net, int fd, int version, u32 tunnel_id, u32 peer_tunnel_id, struct l2tp_tunnel_cfg *cfg, struct l2tp_tunnel **tunnelp);
 extern void l2tp_tunnel_closeall(struct l2tp_tunnel *tunnel);
