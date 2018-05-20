@@ -109,7 +109,6 @@ struct hdd_tgt_cfg {
         bool egap_support;
 #endif
         uint32_t fine_time_measurement_cap;
-        bool bpf_enabled;
 };
 
 struct hdd_dfs_radar_ind {
