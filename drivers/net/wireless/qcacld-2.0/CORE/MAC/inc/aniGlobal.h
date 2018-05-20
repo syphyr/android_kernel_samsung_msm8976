@@ -1127,7 +1127,6 @@ typedef struct sMacOpenParameters
     bool force_target_assert_enabled;
     uint16_t pkt_bundle_timer_value;
     uint16_t pkt_bundle_size;
-    bool bpf_packet_filter_enable;
 } tMacOpenParameters;
 
 typedef struct sHalMacStartParameters
