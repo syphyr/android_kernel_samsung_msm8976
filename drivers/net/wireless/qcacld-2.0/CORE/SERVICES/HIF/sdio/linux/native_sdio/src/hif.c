@@ -1581,7 +1581,7 @@ TODO: MMC SDIO3.0 Setting should also be modified in ReInit() function when Powe
                 } else {
                     value = (value &
                             (~(SDIO_DRIVE_DTSx_MASK << SDIO_DRIVE_DTSx_SHIFT))) |
-                            SDIO_DTSx_SET_TYPE_C;
+                            SDIO_DTSx_SET_TYPE_D;
                     err = Func0_CMD52WriteByte(func->card, addr, value);
                     if (err) {
                         printk("Write CCCR 0x%02X to 0x%02X failed: %d\n",
