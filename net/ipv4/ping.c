@@ -741,12 +741,7 @@ static int ping_v4_sendmsg(struct kiocb *iocb, struct sock *sk, struct msghdr *m
 		/* no remote port */
 	}
 
-	ipc.addr = inet->inet_saddr;
-	ipc.opt = NULL;
-	ipc.oif = sk->sk_bound_dev_if;
-	ipc.tx_flags = 0;
-	ipc.ttl = 0;
-	ipc.tos = -1;
+	ipcm_init_sk(&ipc, inet);
 
 	sock_tx_timestamp(sk, &ipc.tx_flags);
 
