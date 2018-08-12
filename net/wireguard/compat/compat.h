@@ -51,6 +51,13 @@
 #ifndef READ_ONCE
 #define READ_ONCE ACCESS_ONCE
 #endif
+#ifndef WRITE_ONCE
+#ifdef ACCESS_ONCE_RW
+#define WRITE_ONCE(p, v) (ACCESS_ONCE_RW(p) = (v))
+#else
+#define WRITE_ONCE(p, v) (ACCESS_ONCE(p) = (v))
+#endif
+#endif
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)
 #include "udp_tunnel/udp_tunnel_partial_compat.h"
@@ -599,6 +606,33 @@ static inline void *skb_put_data(struct sk_buff *skb, const void *data, unsigned
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0) && !defined(ISRHEL7)
 #define napi_complete_done(n, work_done) napi_complete(n)
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 5, 0)
+#include <linux/netdevice.h>
+/* NAPI_STATE_SCHED gets set by netif_napi_add anyway, so this is safe.
+ * Also, kernels without NAPI_STATE_NO_BUSY_POLL don't have a call to
+ * napi_hash_add inside of netif_napi_add.
+ */
+#define NAPI_STATE_NO_BUSY_POLL NAPI_STATE_SCHED
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
+#include <linux/atomic.h>
+#ifndef atomic_read_acquire
+#define atomic_read_acquire(v) ({ int ___p1 = atomic_read(v); smp_rmb(); ___p1; })
+#endif
+#ifndef atomic_set_release
+#define atomic_set_release(v, i) ({ smp_wmb(); atomic_set(v, i); })
+#endif
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(4, 3, 0)
+#include <linux/atomic.h>
+#ifndef atomic_read_acquire
+#define atomic_read_acquire(v) smp_load_acquire(&(v)->counter)
+#endif
+#ifndef atomic_set_release
+#define atomic_set_release(v, i) smp_store_release(&(v)->counter, (i))
+#endif
 #endif
 
 /* https://lkml.kernel.org/r/20170624021727.17835-1-Jason@zx2c4.com */

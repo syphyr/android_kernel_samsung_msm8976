@@ -43,7 +43,7 @@ struct wireguard_peer {
 	struct dst_cache endpoint_cache;
 	rwlock_t endpoint_lock;
 	struct noise_handshake handshake;
-	u64 last_sent_handshake;
+	atomic64_t last_sent_handshake;
 	struct work_struct transmit_handshake_work, clear_peer_work;
 	struct cookie latest_cookie;
 	struct hlist_node pubkey_hash;
@@ -58,13 +58,17 @@ struct wireguard_peer {
 	struct list_head peer_list;
 	u64 internal_id;
 	struct napi_struct napi;
+	bool is_dead;
 };
 
 struct wireguard_peer *peer_create(struct wireguard_device *wg, const u8 public_key[NOISE_PUBLIC_KEY_LEN], const u8 preshared_key[NOISE_SYMMETRIC_KEY_LEN]);
 
-struct wireguard_peer *peer_get(struct wireguard_peer *peer);
-struct wireguard_peer *peer_rcu_get(struct wireguard_peer *peer);
-
+struct wireguard_peer * __must_check peer_get_maybe_zero(struct wireguard_peer *peer);
+static inline struct wireguard_peer *peer_get(struct wireguard_peer *peer)
+{
+	kref_get(&peer->refcount);
+	return peer;
+}
 void peer_put(struct wireguard_peer *peer);
 void peer_remove(struct wireguard_peer *peer);
 void peer_remove_all(struct wireguard_device *wg);
