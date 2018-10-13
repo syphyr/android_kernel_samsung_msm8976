@@ -1,5 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0
- *
+// SPDX-License-Identifier: GPL-2.0
+/*
  * Copyright (C) 2015-2018 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
@@ -16,8 +16,8 @@ static DEFINE_MUTEX(init_lock);
 static atomic64_t refcnt = ATOMIC64_INIT(0);
 static atomic_t total_entries = ATOMIC_INIT(0);
 static unsigned int max_entries, table_size;
-static void gc_entries(struct work_struct *);
-static DECLARE_DEFERRABLE_WORK(gc_work, gc_entries);
+static void wg_ratelimiter_gc_entries(struct work_struct *);
+static DECLARE_DEFERRABLE_WORK(gc_work, wg_ratelimiter_gc_entries);
 static struct hlist_head *table_v4;
 #if IS_ENABLED(CONFIG_IPV6)
 static struct hlist_head *table_v6;
@@ -53,7 +53,7 @@ static void entry_uninit(struct ratelimiter_entry *entry)
 }
 
 /* Calling this function with a NULL work uninits all entries. */
-static void gc_entries(struct work_struct *work)
+static void wg_ratelimiter_gc_entries(struct work_struct *work)
 {
 	const u64 now = ktime_get_boot_fast_ns();
 	struct ratelimiter_entry *entry;
@@ -62,13 +62,13 @@ static void gc_entries(struct work_struct *work)
 
 	for (i = 0; i < table_size; ++i) {
 		spin_lock(&table_lock);
-		hlist_for_each_entry_safe (entry, temp, &table_v4[i], hash) {
+		hlist_for_each_entry_safe(entry, temp, &table_v4[i], hash) {
 			if (unlikely(!work) ||
 			    now - entry->last_time_ns > NSEC_PER_SEC)
 				entry_uninit(entry);
 		}
 #if IS_ENABLED(CONFIG_IPV6)
-		hlist_for_each_entry_safe (entry, temp, &table_v6[i], hash) {
+		hlist_for_each_entry_safe(entry, temp, &table_v6[i], hash) {
 			if (unlikely(!work) ||
 			    now - entry->last_time_ns > NSEC_PER_SEC)
 				entry_uninit(entry);
@@ -82,7 +82,7 @@ static void gc_entries(struct work_struct *work)
 		queue_delayed_work(system_power_efficient_wq, &gc_work, HZ);
 }
 
-bool ratelimiter_allow(struct sk_buff *skb, struct net *net)
+bool wg_ratelimiter_allow(struct sk_buff *skb, struct net *net)
 {
 	struct { __be64 ip; u32 net; } data = {
 		.net = (unsigned long)net & 0xffffffff };
@@ -105,7 +105,7 @@ bool ratelimiter_allow(struct sk_buff *skb, struct net *net)
 	else
 		return false;
 	rcu_read_lock();
-	hlist_for_each_entry_rcu (entry, bucket, hash) {
+	hlist_for_each_entry_rcu(entry, bucket, hash) {
 		if (entry->net == net && entry->ip == data.ip) {
 			u64 now, tokens;
 			bool ret;
@@ -152,7 +152,7 @@ err_oom:
 	return false;
 }
 
-int ratelimiter_init(void)
+int wg_ratelimiter_init(void)
 {
 	mutex_lock(&init_lock);
 	if (atomic64_inc_return(&refcnt) != 1)
@@ -199,14 +199,14 @@ err:
 	return -ENOMEM;
 }
 
-void ratelimiter_uninit(void)
+void wg_ratelimiter_uninit(void)
 {
 	mutex_lock(&init_lock);
 	if (atomic64_dec_if_positive(&refcnt))
 		goto out;
 
 	cancel_delayed_work_sync(&gc_work);
-	gc_entries(NULL);
+	wg_ratelimiter_gc_entries(NULL);
 	rcu_barrier();
 	kvfree(table_v4);
 #if IS_ENABLED(CONFIG_IPV6)
@@ -217,4 +217,4 @@ out:
 	mutex_unlock(&init_lock);
 }
 
-#include "selftest/ratelimiter.h"
+#include "selftest/ratelimiter.c"
