@@ -1,7 +1,6 @@
-/* SPDX-License-Identifier: OpenSSL OR (BSD-3-Clause OR GPL-2.0)
- *
+// SPDX-License-Identifier: GPL-2.0 OR MIT
+/*
  * Copyright (C) 2015-2018 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Implementation of the Poly1305 message authenticator.
  *
@@ -9,270 +8,122 @@
  */
 
 #include <zinc/poly1305.h>
+#include "../selftest/run.h"
 
 #include <asm/unaligned.h>
 #include <linux/kernel.h>
 #include <linux/string.h>
+#include <linux/module.h>
+#include <linux/init.h>
 
-#ifndef HAVE_POLY1305_ARCH_IMPLEMENTATION
+#if defined(CONFIG_ZINC_ARCH_X86_64)
+#include "poly1305-x86_64-glue.c"
+#elif defined(CONFIG_ZINC_ARCH_ARM) || defined(CONFIG_ZINC_ARCH_ARM64)
+#include "poly1305-arm-glue.c"
+#elif defined(CONFIG_ZINC_ARCH_MIPS) || defined(CONFIG_ZINC_ARCH_MIPS64)
+#include "poly1305-mips-glue.c"
+#else
 static inline bool poly1305_init_arch(void *ctx,
-				      const u8 key[POLY1305_KEY_SIZE],
-				      simd_context_t simd_context)
+				      const u8 key[POLY1305_KEY_SIZE])
 {
 	return false;
 }
-static inline bool poly1305_blocks_arch(void *ctx, const u8 *inp,
-					const size_t len, const u32 padbit,
-					simd_context_t simd_context)
+static inline bool poly1305_blocks_arch(void *ctx, const u8 *input,
+					size_t len, const u32 padbit,
+					simd_context_t *simd_context)
 {
 	return false;
 }
 static inline bool poly1305_emit_arch(void *ctx, u8 mac[POLY1305_MAC_SIZE],
 				      const u32 nonce[4],
-				      simd_context_t simd_context)
+				      simd_context_t *simd_context)
 {
 	return false;
 }
-void __init poly1305_fpu_init(void)
+static bool *const poly1305_nobs[] __initconst = { };
+static void __init poly1305_fpu_init(void)
 {
 }
 #endif
 
-struct poly1305_internal {
-	u32 h[5];
-	u32 r[4];
-};
+#if defined(CONFIG_ARCH_SUPPORTS_INT128) && defined(__SIZEOF_INT128__)
+#include "poly1305-donna64.c"
+#else
+#include "poly1305-donna32.c"
+#endif
 
-static void poly1305_init_generic(void *ctx, const u8 key[16])
-{
-	struct poly1305_internal *st = (struct poly1305_internal *)ctx;
-
-	/* h = 0 */
-	st->h[0] = 0;
-	st->h[1] = 0;
-	st->h[2] = 0;
-	st->h[3] = 0;
-	st->h[4] = 0;
-
-	/* r &= 0xffffffc0ffffffc0ffffffc0fffffff */
-	st->r[0] = get_unaligned_le32(&key[ 0]) & 0x0fffffff;
-	st->r[1] = get_unaligned_le32(&key[ 4]) & 0x0ffffffc;
-	st->r[2] = get_unaligned_le32(&key[ 8]) & 0x0ffffffc;
-	st->r[3] = get_unaligned_le32(&key[12]) & 0x0ffffffc;
-}
-
-static void poly1305_blocks_generic(void *ctx, const u8 *inp, size_t len,
-				    const u32 padbit)
-{
-#define CONSTANT_TIME_CARRY(a, b)                                              \
-	((a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(a) * 8 - 1))
-	struct poly1305_internal *st = (struct poly1305_internal *)ctx;
-	u32 r0, r1, r2, r3;
-	u32 s1, s2, s3;
-	u32 h0, h1, h2, h3, h4, c;
-	u64 d0, d1, d2, d3;
-
-	r0 = st->r[0];
-	r1 = st->r[1];
-	r2 = st->r[2];
-	r3 = st->r[3];
-
-	s1 = r1 + (r1 >> 2);
-	s2 = r2 + (r2 >> 2);
-	s3 = r3 + (r3 >> 2);
-
-	h0 = st->h[0];
-	h1 = st->h[1];
-	h2 = st->h[2];
-	h3 = st->h[3];
-	h4 = st->h[4];
-
-	while (len >= POLY1305_BLOCK_SIZE) {
-		/* h += m[i] */
-		h0 = (u32)(d0 = (u64)h0 + (0       ) + get_unaligned_le32(&inp[ 0]));
-		h1 = (u32)(d1 = (u64)h1 + (d0 >> 32) + get_unaligned_le32(&inp[ 4]));
-		h2 = (u32)(d2 = (u64)h2 + (d1 >> 32) + get_unaligned_le32(&inp[ 8]));
-		h3 = (u32)(d3 = (u64)h3 + (d2 >> 32) + get_unaligned_le32(&inp[12]));
-		h4 += (u32)(d3 >> 32) + padbit;
-
-		/* h *= r "%" p, where "%" stands for "partial remainder" */
-		d0 = ((u64)h0 * r0) +
-		     ((u64)h1 * s3) +
-		     ((u64)h2 * s2) +
-		     ((u64)h3 * s1);
-		d1 = ((u64)h0 * r1) +
-		     ((u64)h1 * r0) +
-		     ((u64)h2 * s3) +
-		     ((u64)h3 * s2) +
-		     (h4 * s1);
-		d2 = ((u64)h0 * r2) +
-		     ((u64)h1 * r1) +
-		     ((u64)h2 * r0) +
-		     ((u64)h3 * s3) +
-		     (h4 * s2);
-		d3 = ((u64)h0 * r3) +
-		     ((u64)h1 * r2) +
-		     ((u64)h2 * r1) +
-		     ((u64)h3 * r0) +
-		     (h4 * s3);
-		h4 = (h4 * r0);
-
-		/* last reduction step: */
-		/* a) h4:h0 = h4<<128 + d3<<96 + d2<<64 + d1<<32 + d0 */
-		h0 = (u32)d0;
-		h1 = (u32)(d1 += d0 >> 32);
-		h2 = (u32)(d2 += d1 >> 32);
-		h3 = (u32)(d3 += d2 >> 32);
-		h4 += (u32)(d3 >> 32);
-		/* b) (h4:h0 += (h4:h0>>130) * 5) %= 2^130 */
-		c = (h4 >> 2) + (h4 & ~3U);
-		h4 &= 3;
-		h0 += c;
-		h1 += (c = CONSTANT_TIME_CARRY(h0, c));
-		h2 += (c = CONSTANT_TIME_CARRY(h1, c));
-		h3 += (c = CONSTANT_TIME_CARRY(h2, c));
-		h4 += CONSTANT_TIME_CARRY(h3, c);
-		/*
-		 * Occasional overflows to 3rd bit of h4 are taken care of
-		 * "naturally". If after this point we end up at the top of
-		 * this loop, then the overflow bit will be accounted for
-		 * in next iteration. If we end up in poly1305_emit, then
-		 * comparison to modulus below will still count as "carry
-		 * into 131st bit", so that properly reduced value will be
-		 * picked in conditional move.
-		 */
-
-		inp += POLY1305_BLOCK_SIZE;
-		len -= POLY1305_BLOCK_SIZE;
-	}
-
-	st->h[0] = h0;
-	st->h[1] = h1;
-	st->h[2] = h2;
-	st->h[3] = h3;
-	st->h[4] = h4;
-#undef CONSTANT_TIME_CARRY
-}
-
-static void poly1305_emit_generic(void *ctx, u8 mac[16], const u32 nonce[4])
-{
-	struct poly1305_internal *st = (struct poly1305_internal *)ctx;
-	u32 h0, h1, h2, h3, h4;
-	u32 g0, g1, g2, g3, g4;
-	u64 t;
-	u32 mask;
-
-	h0 = st->h[0];
-	h1 = st->h[1];
-	h2 = st->h[2];
-	h3 = st->h[3];
-	h4 = st->h[4];
-
-	/* compare to modulus by computing h + -p */
-	g0 = (u32)(t = (u64)h0 + 5);
-	g1 = (u32)(t = (u64)h1 + (t >> 32));
-	g2 = (u32)(t = (u64)h2 + (t >> 32));
-	g3 = (u32)(t = (u64)h3 + (t >> 32));
-	g4 = h4 + (u32)(t >> 32);
-
-	/* if there was carry into 131st bit, h3:h0 = g3:g0 */
-	mask = 0 - (g4 >> 2);
-	g0 &= mask;
-	g1 &= mask;
-	g2 &= mask;
-	g3 &= mask;
-	mask = ~mask;
-	h0 = (h0 & mask) | g0;
-	h1 = (h1 & mask) | g1;
-	h2 = (h2 & mask) | g2;
-	h3 = (h3 & mask) | g3;
-
-	/* mac = (h + nonce) % (2^128) */
-	h0 = (u32)(t = (u64)h0 + nonce[0]);
-	h1 = (u32)(t = (u64)h1 + (t >> 32) + nonce[1]);
-	h2 = (u32)(t = (u64)h2 + (t >> 32) + nonce[2]);
-	h3 = (u32)(t = (u64)h3 + (t >> 32) + nonce[3]);
-
-	put_unaligned_le32(h0, &mac[ 0]);
-	put_unaligned_le32(h1, &mac[ 4]);
-	put_unaligned_le32(h2, &mac[ 8]);
-	put_unaligned_le32(h3, &mac[12]);
-}
-
-void poly1305_init(struct poly1305_ctx *ctx, const u8 key[POLY1305_KEY_SIZE],
-		   simd_context_t simd_context)
+void poly1305_init(struct poly1305_ctx *ctx, const u8 key[POLY1305_KEY_SIZE])
 {
 	ctx->nonce[0] = get_unaligned_le32(&key[16]);
 	ctx->nonce[1] = get_unaligned_le32(&key[20]);
 	ctx->nonce[2] = get_unaligned_le32(&key[24]);
 	ctx->nonce[3] = get_unaligned_le32(&key[28]);
 
-	if (!poly1305_init_arch(ctx->opaque, key, simd_context))
+	if (!poly1305_init_arch(ctx->opaque, key))
 		poly1305_init_generic(ctx->opaque, key);
+
 	ctx->num = 0;
 }
 EXPORT_SYMBOL(poly1305_init);
 
-static inline void poly1305_blocks(void *ctx, const u8 *inp, const size_t len,
+static inline void poly1305_blocks(void *ctx, const u8 *input, const size_t len,
 				   const u32 padbit,
-				   simd_context_t simd_context)
+				   simd_context_t *simd_context)
 {
-	if (!poly1305_blocks_arch(ctx, inp, len, padbit, simd_context))
-		poly1305_blocks_generic(ctx, inp, len, padbit);
+	if (!poly1305_blocks_arch(ctx, input, len, padbit, simd_context))
+		poly1305_blocks_generic(ctx, input, len, padbit);
 }
 
 static inline void poly1305_emit(void *ctx, u8 mac[POLY1305_KEY_SIZE],
 				 const u32 nonce[4],
-				 simd_context_t simd_context)
+				 simd_context_t *simd_context)
 {
 	if (!poly1305_emit_arch(ctx, mac, nonce, simd_context))
 		poly1305_emit_generic(ctx, mac, nonce);
 }
 
-void poly1305_update(struct poly1305_ctx *ctx, const u8 *inp, size_t len,
-		     simd_context_t simd_context)
+void poly1305_update(struct poly1305_ctx *ctx, const u8 *input, size_t len,
+		     simd_context_t *simd_context)
 {
-	const size_t num = ctx->num % POLY1305_BLOCK_SIZE;
+	const size_t num = ctx->num;
 	size_t rem;
 
 	if (num) {
 		rem = POLY1305_BLOCK_SIZE - num;
-		if (len >= rem) {
-			memcpy(ctx->data + num, inp, rem);
-			poly1305_blocks(ctx->opaque, ctx->data,
-					POLY1305_BLOCK_SIZE, 1, simd_context);
-			inp += rem;
-			len -= rem;
-		} else {
-			/* Still not enough data to process a block. */
-			memcpy(ctx->data + num, inp, len);
+		if (len < rem) {
+			memcpy(ctx->data + num, input, len);
 			ctx->num = num + len;
 			return;
 		}
+		memcpy(ctx->data + num, input, rem);
+		poly1305_blocks(ctx->opaque, ctx->data, POLY1305_BLOCK_SIZE, 1,
+				simd_context);
+		input += rem;
+		len -= rem;
 	}
 
 	rem = len % POLY1305_BLOCK_SIZE;
 	len -= rem;
 
 	if (len >= POLY1305_BLOCK_SIZE) {
-		poly1305_blocks(ctx->opaque, inp, len, 1, simd_context);
-		inp += len;
+		poly1305_blocks(ctx->opaque, input, len, 1, simd_context);
+		input += len;
 	}
 
 	if (rem)
-		memcpy(ctx->data, inp, rem);
+		memcpy(ctx->data, input, rem);
 
 	ctx->num = rem;
 }
 EXPORT_SYMBOL(poly1305_update);
 
-void poly1305_finish(struct poly1305_ctx *ctx, u8 mac[POLY1305_MAC_SIZE],
-		     simd_context_t simd_context)
+void poly1305_final(struct poly1305_ctx *ctx, u8 mac[POLY1305_MAC_SIZE],
+		    simd_context_t *simd_context)
 {
-	size_t num = ctx->num % POLY1305_BLOCK_SIZE;
+	size_t num = ctx->num;
 
 	if (num) {
-		ctx->data[num++] = 1; /* pad bit */
+		ctx->data[num++] = 1;
 		while (num < POLY1305_BLOCK_SIZE)
 			ctx->data[num++] = 0;
 		poly1305_blocks(ctx->opaque, ctx->data, POLY1305_BLOCK_SIZE, 0,
@@ -281,9 +132,37 @@ void poly1305_finish(struct poly1305_ctx *ctx, u8 mac[POLY1305_MAC_SIZE],
 
 	poly1305_emit(ctx->opaque, mac, ctx->nonce, simd_context);
 
-	/* zero out the state */
 	memzero_explicit(ctx, sizeof(*ctx));
 }
-EXPORT_SYMBOL(poly1305_finish);
+EXPORT_SYMBOL(poly1305_final);
 
-#include "../selftest/poly1305.h"
+#include "../selftest/poly1305.c"
+
+static bool nosimd __initdata = false;
+
+#ifndef COMPAT_ZINC_IS_A_MODULE
+int __init poly1305_mod_init(void)
+#else
+static int __init mod_init(void)
+#endif
+{
+	if (!nosimd)
+		poly1305_fpu_init();
+	if (!selftest_run("poly1305", poly1305_selftest, poly1305_nobs,
+			  ARRAY_SIZE(poly1305_nobs)))
+		return -ENOTRECOVERABLE;
+	return 0;
+}
+
+#ifdef COMPAT_ZINC_IS_A_MODULE
+static void __exit mod_exit(void)
+{
+}
+
+module_param(nosimd, bool, 0);
+module_init(mod_init);
+module_exit(mod_exit);
+MODULE_LICENSE("GPL v2");
+MODULE_DESCRIPTION("Poly1305 one-time authenticator");
+MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com>");
+#endif
