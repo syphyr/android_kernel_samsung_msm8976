@@ -1597,16 +1597,15 @@ int l2tp_tunnel_register(struct l2tp_tunnel *tunnel, struct net *net,
 			goto err_sock;
 	}
 
-	sk = sock->sk;
-
-	sock_hold(sk);
-	tunnel->sock = sk;
 	tunnel->l2tp_net = net;
-
 	pn = l2tp_pernet(net);
 	spin_lock_bh(&pn->l2tp_tunnel_list_lock);
 	list_add_rcu(&tunnel->list, &pn->l2tp_tunnel_list);
 	spin_unlock_bh(&pn->l2tp_tunnel_list_lock);
+
+	sk = sock->sk;
+	sock_hold(sk);
+	tunnel->sock = sk;
 
 	if (tunnel->encap == L2TP_ENCAPTYPE_UDP) {
 		udp_sk(sk)->encap_type = UDP_ENCAP_L2TPINUDP;
