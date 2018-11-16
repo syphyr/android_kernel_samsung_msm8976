@@ -692,7 +692,7 @@ void ip_tunnel_xmit(struct sk_buff *skb, struct net_device *dev,
 
 	iph->version	=	4;
 	iph->ihl	=	sizeof(struct iphdr) >> 2;
-	iph->frag_off	=	df;
+	iph->frag_off   =       ip_mtu_locked(&rt->dst) ? 0 : df;
 	iph->protocol	=	tnl_params->protocol;
 	iph->tos	=	ip_tunnel_ecn_encap(tos, inner_iph, skb);
 	iph->daddr	=	fl4.daddr;
