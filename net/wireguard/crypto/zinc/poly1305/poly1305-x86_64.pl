@@ -65,42 +65,52 @@
 # (***)	strangely enough performance seems to vary from core to core,
 #	listed result is best case;
 
-$flavour = "linux"; # shift;
+$flavour = shift;
 $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
-$kernel=0; $kernel=1 if ($flavour =~ /linux/);
+$kernel=0; $kernel=1 if (!$flavour && !$output);
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-( $xlate="${dir}../perlasm/x86_64-xlate.pl" and -f $xlate) or
-die "can't locate x86_64-xlate.pl";
+if (!$kernel) {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+    die "can't locate x86_64-xlate.pl";
 
-if ($kernel) {
-	$avx = 4; # The kernel uses ifdefs for this.
+    open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+
+    if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+		=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+	$avx = ($1>=2.19) + ($1>=2.22) + ($1>=2.25);
+    }
+
+    if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
+	`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
+	$avx = ($1>=2.09) + ($1>=2.10) + ($1>=2.12);
+	$avx += 1 if ($1==2.11 && $2>=8);
+    }
+
+    if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	`ml64 2>&1` =~ /Version ([0-9]+)\./) {
+	$avx = ($1>=10) + ($1>=11);
+    }
+
+    if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
+	$avx = ($2>=3.0) + ($2>3.0);
+    }
 } else {
-	if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
-			=~ /GNU assembler version ([2-9]\.[0-9]+)/) {
-		$avx = ($1>=2.19) + ($1>=2.22) + ($1>=2.25) + ($1>=2.26);
+    $avx = 4; # The kernel uses ifdefs for this.
+    $pid = open OUT,"|-";
+    if (!$pid) {
+	while (<STDIN>) {
+	    s/(^\.type.*),[0-9]+$/\1/;
+	    s/(^\.type.*),\@abi-omnipotent+$/\1,\@function/;
+	    /^\.cfi.*/ or print;
 	}
-
-	if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
-		`nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)(?:\.([0-9]+))?/) {
-		$avx = ($1>=2.09) + ($1>=2.10) + 2 * ($1>=2.12);
-		$avx += 2 if ($1==2.11 && $2>=8);
-	}
-
-	if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
-		`ml64 2>&1` =~ /Version ([0-9]+)\./) {
-		$avx = ($1>=10) + ($1>=12);
-	}
-
-	if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
-		$avx = ($2>=3.0) + ($2>3.0);
-	}
+	exit;
+    }
 }
-
-open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
 *STDOUT=*OUT;
 
 sub declare_function() {
@@ -437,6 +447,8 @@ $code.=<<___;
 .type	__poly1305_init_avx,\@abi-omnipotent
 .align	32
 __poly1305_init_avx:
+	push %rbp
+	mov %rsp,%rbp
 	mov	$r0,$h0
 	mov	$r1,$h1
 	xor	$h2,$h2
@@ -593,6 +605,7 @@ __poly1305_init_avx:
 	mov	$d1#d,`16*8+8-64`($ctx)
 
 	lea	-48-64($ctx),$ctx	# size [de-]optimization
+	pop %rbp
 	ret
 .size	__poly1305_init_avx,.-__poly1305_init_avx
 ___
@@ -618,6 +631,9 @@ $code.=<<___;
 	test	\$31,$len
 	jz	.Leven_avx
 
+	push	%rbp
+.cfi_push	%rbp
+	mov 	%rsp,%rbp
 	push	%rbx
 .cfi_push	%rbx
 	push	%r12
@@ -729,18 +745,18 @@ $code.=<<___;
 	mov	$h2#d,16($ctx)
 .align	16
 .Ldone_avx:
-	mov	0(%rsp),%r15
+	pop 		%r15
 .cfi_restore	%r15
-	mov	8(%rsp),%r14
+	pop 		%r14
 .cfi_restore	%r14
-	mov	16(%rsp),%r13
+	pop 		%r13
 .cfi_restore	%r13
-	mov	24(%rsp),%r12
+	pop 		%r12
 .cfi_restore	%r12
-	mov	32(%rsp),%rbx
+	pop 		%rbx
 .cfi_restore	%rbx
-	lea	40(%rsp),%rsp
-.cfi_adjust_cfa_offset	-40
+	pop 		%rbp
+.cfi_restore	%rbp
 .Lno_data_avx:
 .Lblocks_avx_epilogue:
 	ret
@@ -749,6 +765,9 @@ $code.=<<___;
 .align	32
 .Lbase2_64_avx:
 .cfi_startproc
+	push	%rbp
+.cfi_push	%rbp
+	mov 	%rsp,%rbp
 	push	%rbx
 .cfi_push	%rbx
 	push	%r12
@@ -816,20 +835,18 @@ $code.=<<___;
 
 .Lproceed_avx:
 	mov	%r15,$len
-
-	mov	0(%rsp),%r15
+	pop 		%r15
 .cfi_restore	%r15
-	mov	8(%rsp),%r14
+	pop 		%r14
 .cfi_restore	%r14
-	mov	16(%rsp),%r13
+	pop 		%r13
 .cfi_restore	%r13
-	mov	24(%rsp),%r12
+	pop 		%r12
 .cfi_restore	%r12
-	mov	32(%rsp),%rbx
+	pop 		%rbx
 .cfi_restore	%rbx
-	lea	40(%rsp),%rax
-	lea	40(%rsp),%rsp
-.cfi_adjust_cfa_offset	-40
+	pop 		%rbp
+.cfi_restore	%rbp
 .Lbase2_64_avx_epilogue:
 	jmp	.Ldo_avx
 .cfi_endproc
@@ -1545,6 +1562,9 @@ $code.=<<___;
 	test	\$63,$len
 	jz	.Leven_avx2$suffix
 
+	push	%rbp
+.cfi_push	%rbp
+	mov 	%rsp,%rbp
 	push	%rbx
 .cfi_push	%rbx
 	push	%r12
@@ -1662,18 +1682,18 @@ $code.=<<___;
 	mov	$h2#d,16($ctx)
 .align	16
 .Ldone_avx2$suffix:
-	mov	0(%rsp),%r15
+	pop 		%r15
 .cfi_restore	%r15
-	mov	8(%rsp),%r14
+	pop 		%r14
 .cfi_restore	%r14
-	mov	16(%rsp),%r13
+	pop 		%r13
 .cfi_restore	%r13
-	mov	24(%rsp),%r12
+	pop 		%r12
 .cfi_restore	%r12
-	mov	32(%rsp),%rbx
+	pop 		%rbx
 .cfi_restore	%rbx
-	lea	40(%rsp),%rsp
-.cfi_adjust_cfa_offset	-40
+	pop 		%rbp
+.cfi_restore 	%rbp
 .Lno_data_avx2$suffix:
 .Lblocks_avx2_epilogue$suffix:
 	ret
@@ -1682,6 +1702,9 @@ $code.=<<___;
 .align	32
 .Lbase2_64_avx2$suffix:
 .cfi_startproc
+	push	%rbp
+.cfi_push	%rbp
+	mov 	%rsp,%rbp
 	push	%rbx
 .cfi_push	%rbx
 	push	%r12
@@ -1760,19 +1783,18 @@ $code.=<<___ if (!$kernel);
 	mov	\$`(1<<31|1<<30|1<<16)`,%r11d
 ___
 $code.=<<___;
-	mov	0(%rsp),%r15
+	pop 		%r15
 .cfi_restore	%r15
-	mov	8(%rsp),%r14
+	pop 		%r14
 .cfi_restore	%r14
-	mov	16(%rsp),%r13
+	pop 		%r13
 .cfi_restore	%r13
-	mov	24(%rsp),%r12
+	pop 		%r12
 .cfi_restore	%r12
-	mov	32(%rsp),%rbx
+	pop 		%rbx
 .cfi_restore	%rbx
-	lea	40(%rsp),%rax
-	lea	40(%rsp),%rsp
-.cfi_adjust_cfa_offset	-40
+	pop 		%rbp
+.cfi_restore 	%rbp
 .Lbase2_64_avx2_epilogue$suffix:
 	jmp	.Ldo_avx2$suffix
 .cfi_endproc
