@@ -1,0 +1,3 @@
+[submodule "net/wireguard"]
+	path = net/wireguard
+	url = https://git.zx2c4.com/WireGuard
