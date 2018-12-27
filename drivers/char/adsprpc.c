@@ -334,7 +334,9 @@ static void fastrpc_mmap_add(struct fastrpc_mmap *map)
 {
 	if (map->flags == ADSP_MMAP_HEAP_ADDR) {
 		struct fastrpc_apps *me = &gfa;
+		spin_lock(&me->hlock);
 		hlist_add_head(&map->hn, &me->maps);
+		spin_unlock(&me->hlock);
 	} else {
 		struct fastrpc_file *fl = map->fl;
 		hlist_add_head(&map->hn, &fl->maps);
@@ -347,6 +349,8 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 	struct fastrpc_mmap *match = NULL, *map = NULL;
 	struct hlist_node *n = NULL;
 	struct fastrpc_apps *me = &gfa;
+
+	spin_lock(&me->hlock);
 	hlist_for_each_entry_safe(map, n, &me->maps, hn) {
 		if (map->refs == 1 && map->raddr == va &&
 				map->raddr + map->len == va + len &&
@@ -357,6 +361,7 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 			break;
 		}
 	}
+	spin_unlock(&me->hlock);
 	if (match) {
 		*ppmap = match;
 		return 0;
@@ -1686,22 +1691,26 @@ bail:
 static int fastrpc_mmap_find(struct fastrpc_file *fl, int fd, uintptr_t va,
 			size_t len, int mflags, struct fastrpc_mmap **ppmap)
 {
+	struct fastrpc_apps *me = &gfa;
 	struct fastrpc_mmap *match = NULL, *map = NULL;
 	struct hlist_node *n = NULL;
 
 	if (mflags == ADSP_MMAP_HEAP_ADDR) {
-		struct fastrpc_apps *me = &gfa;
+		spin_lock(&me->hlock);
 		hlist_for_each_entry_safe(map, n, &me->maps, hn) {
 			if (map->va >= va &&
 					map->va + map->len <= va + len &&
 					map->fd == fd) {
-				if (map->refs + 1 == INT_MAX)
+				if (map->refs + 1 == INT_MAX) {
+					spin_unlock(&me->hlock);
 					return -ETOOMANYREFS;
+				}
 				map->refs++;
 				match = map;
 				break;
 			}
 		}
+		spin_unlock(&me->hlock);
 	} else {
 		hlist_for_each_entry_safe(map, n, &fl->maps, hn) {
 			if (map->va >= va &&
