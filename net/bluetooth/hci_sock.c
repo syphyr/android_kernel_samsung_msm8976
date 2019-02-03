@@ -418,13 +418,12 @@ static int hci_sock_release(struct socket *sock)
 	if (!sk)
 		return 0;
 
-	hdev = hci_pi(sk)->hdev;
-
 	if (hci_pi(sk)->channel == HCI_CHANNEL_MONITOR)
 		atomic_dec(&monitor_promisc);
 
 	bt_sock_unlink(&hci_sk_list, sk);
 
+	hdev = hci_pi(sk)->hdev;
 	if (hdev) {
 		atomic_dec(&hdev->promisc);
 		hci_dev_put(hdev);
