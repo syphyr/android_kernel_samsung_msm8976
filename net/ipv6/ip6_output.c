@@ -524,7 +524,7 @@ int ip6_fragment(struct sk_buff *skb, int (*output)(struct sk_buff *))
 	struct ipv6_pinfo *np = skb->sk ? inet6_sk(skb->sk) : NULL;
 	struct ipv6hdr *tmp_hdr;
 	struct frag_hdr *fh;
-	unsigned int mtu, hlen, left, len;
+	unsigned int mtu, hlen, left, len, nexthdr_offset;
 	int hroom, troom;
 	__be32 frag_id = 0;
 	int ptr, offset = 0, err=0;
@@ -536,6 +536,7 @@ int ip6_fragment(struct sk_buff *skb, int (*output)(struct sk_buff *))
 		goto fail;
 	hlen = err;
 	nexthdr = *prevhdr;
+	nexthdr_offset = prevhdr - skb_network_header(skb);
 
 	mtu = ip6_skb_dst_mtu(skb);
 
@@ -562,6 +563,7 @@ int ip6_fragment(struct sk_buff *skb, int (*output)(struct sk_buff *))
 	}
 	mtu -= hlen + sizeof(struct frag_hdr);
 
+	prevhdr = skb_network_header(skb) + nexthdr_offset;
 	if (skb_has_frag_list(skb)) {
 		int first_len = skb_pagelen(skb);
 		struct sk_buff *frag2;
