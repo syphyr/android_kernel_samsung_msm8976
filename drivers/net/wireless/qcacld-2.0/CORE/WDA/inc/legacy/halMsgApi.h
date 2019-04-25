@@ -1017,6 +1017,8 @@ typedef struct
      * by way of ignoring if using new host/old FW or old host/new FW since it is at the end of this struct
      */
     tSirMacAddr bssId;
+    uint8_t ssidHidden;
+    tSirMacSSid ssid;
 
     eHalStatus status;
 
