@@ -1047,7 +1047,7 @@ enum
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER                 "gEnableFatalEvent"
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN             (0)
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX             (1)
-#define CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT         (0)
+#define CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT         (1)
 
 #define CFG_TELE_BCN_TRANS_LI_NAME                   "telescopicBeaconTransListenInterval"
 #define CFG_TELE_BCN_TRANS_LI_MIN                    ( 0 )
