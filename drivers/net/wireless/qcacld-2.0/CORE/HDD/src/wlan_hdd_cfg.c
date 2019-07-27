@@ -4407,7 +4407,7 @@ REG_TABLE_ENTRY mbssid_sap_dyn_ini_reg_table[] =
                  | VAR_FLAGS_DYNAMIC_CFG,
                  CFG_ACS_BAND_SWITCH_THRESHOLD_DEFAULT,
                  CFG_ACS_BAND_SWITCH_THRESHOLD_MIN,
-                 CFG_ACS_BAND_SWITCH_THRESHOLD_MAX )
+                 CFG_ACS_BAND_SWITCH_THRESHOLD_MAX ),
 };
 #endif
 
