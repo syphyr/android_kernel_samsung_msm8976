@@ -4750,7 +4750,7 @@ static int parse_options(struct super_block *sb, char *options, int silent,
 		case Opt_shortname_lower:
 		case Opt_shortname_win95:
 		case Opt_shortname_mixed:
-			pr_warn("[SDFAT] DRAGONS AHEAD! sdFAT only understands \"shortname=winnt\"!\n");
+			pr_info("[SDFAT] sdFAT only understands \"shortname=winnt\"!\n");
 		case Opt_shortname_winnt:
 			break;
 #endif /* CONFIG_SDFAT_USE_FOR_VFAT */
