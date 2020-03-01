@@ -1,5 +1,0 @@
-[gerrit]
-host=review.lineageos.org
-port=29418
-project=LineageOS/android_kernel_samsung_msm8976.git
-defaultbranch=cm-14.1
