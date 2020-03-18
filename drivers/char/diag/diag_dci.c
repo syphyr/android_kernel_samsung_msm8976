@@ -2929,6 +2929,7 @@ fail_alloc:
 		kfree(new_entry->dci_log_mask);
 	}
 	kfree(new_entry);
+	put_task_struct(current);
 	mutex_unlock(&driver->dci_mutex);
 	return DIAG_DCI_NO_REG;
 }
