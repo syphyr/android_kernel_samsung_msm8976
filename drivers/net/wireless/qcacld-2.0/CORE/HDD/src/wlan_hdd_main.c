@@ -14145,7 +14145,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
             if (ret == A_OK) {
                 fwd_tx_packets_diff += HDD_BW_GET_DIFF(fwd_tx_packets,
                     pAdapter->prev_fwd_tx_packets);
-                fwd_rx_packets_diff += HDD_BW_GET_DIFF(fwd_tx_packets,
+                fwd_rx_packets_diff += HDD_BW_GET_DIFF(fwd_rx_packets,
                     pAdapter->prev_fwd_rx_packets);
             }
         }
