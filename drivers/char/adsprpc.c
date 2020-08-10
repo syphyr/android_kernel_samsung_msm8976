@@ -405,10 +405,12 @@ static void fastrpc_mmap_free(struct fastrpc_mmap *map)
 		return;
 	}
 	if (map->flags == ADSP_MMAP_HEAP_ADDR) {
+		spin_lock(&me->hlock);
 		if (map->refs)
 			map->refs--;
 		if (!map->refs)
 			hlist_del_init(&map->hn);
+		spin_unlock(&me->hlock);
 	} else {
 		fl = map->fl;
 		if (map->refs)
