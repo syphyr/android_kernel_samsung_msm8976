@@ -3732,12 +3732,12 @@ void hci_event_packet(struct hci_dev *hdev, struct sk_buff *skb)
 	struct hci_event_hdr *hdr = (void *) skb->data;
 	__u8 event = hdr->evt;
 
-	hci_dev_lock(hdev);
-
 	if (!event) {
 		BT_INFO("Received unexpected HCI Event 00000000");
 		goto done;
 	}
+
+	hci_dev_lock(hdev);
 
 	/* Received events are (currently) only needed when a request is
 	 * ongoing so avoid unnecessary memory allocation.
