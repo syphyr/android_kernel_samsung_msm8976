@@ -153,6 +153,7 @@
 #define IPA_SMMU_UC_VA_START 0x40000000
 #define IPA_SMMU_UC_VA_SIZE 0x20000000
 #define IPA_SMMU_UC_VA_END (IPA_SMMU_UC_VA_START +  IPA_SMMU_UC_VA_SIZE)
+#define IPA_RULE_CNT_MAX 512
 
 
 struct ipa_client_names {
