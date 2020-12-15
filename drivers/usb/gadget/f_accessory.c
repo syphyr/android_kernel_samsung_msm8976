@@ -241,6 +241,15 @@ static struct usb_gadget_strings *acc_strings[] = {
 
 static struct acc_dev *_acc_dev;
 
+static struct acc_dev *get_acc_dev(void)
+{
+	return _acc_dev;
+}
+
+static void put_acc_dev(struct acc_dev *dev)
+{
+}
+
 static inline struct acc_dev *func_to_dev(struct usb_function *f)
 {
 	return container_of(f, struct acc_dev, function);
@@ -305,7 +314,10 @@ static void acc_set_disconnected(struct acc_dev *dev)
 
 static void acc_complete_in(struct usb_ep *ep, struct usb_request *req)
 {
-	struct acc_dev *dev = _acc_dev;
+	struct acc_dev *dev = get_acc_dev();
+
+	if (!dev)
+		return;
 
 	if (req->status == -ESHUTDOWN) {
 		pr_debug("acc_complete_in set disconnected");
@@ -315,11 +327,15 @@ static void acc_complete_in(struct usb_ep *ep, struct usb_request *req)
 	req_put(dev, &dev->tx_idle, req);
 
 	wake_up(&dev->write_wq);
+	put_acc_dev(dev);
 }
 
 static void acc_complete_out(struct usb_ep *ep, struct usb_request *req)
 {
-	struct acc_dev *dev = _acc_dev;
+	struct acc_dev *dev = get_acc_dev();
+
+	if (!dev)
+		return;
 
 	dev->rx_done = 1;
 	if (req->status == -ESHUTDOWN) {
@@ -328,6 +344,7 @@ static void acc_complete_out(struct usb_ep *ep, struct usb_request *req)
 	}
 
 	wake_up(&dev->read_wq);
+	put_acc_dev(dev);
 }
 
 static void acc_complete_set_string(struct usb_ep *ep, struct usb_request *req)
@@ -782,21 +799,36 @@ static long acc_ioctl(struct file *fp, unsigned code, unsigned long value)
 
 static int acc_open(struct inode *ip, struct file *fp)
 {
-	if (atomic_xchg(&_acc_dev->open_excl, 1))
-		return -EBUSY;
+	struct acc_dev *dev = get_acc_dev();
 
-	_acc_dev->disconnected = 0;
-	fp->private_data = _acc_dev;
+	if (!dev)
+		return -ENODEV;
+
+	if (atomic_xchg(&dev->open_excl, 1)) {
+		put_acc_dev(dev);
+		return -EBUSY;
+	}
+
+	dev->disconnected = 0;
+	fp->private_data = dev;
 	return 0;
 }
 
 static int acc_release(struct inode *ip, struct file *fp)
 {
-	WARN_ON(!atomic_xchg(&_acc_dev->open_excl, 0));
+	struct acc_dev *dev = fp->private_data;
+
+	if (!dev)
+		return -ENOENT;
+
+	WARN_ON(!atomic_xchg(&dev->open_excl, 0));
 	/* indicate that we are disconnected
 	 * still could be online so don't touch online flag
 	 */
-	_acc_dev->disconnected = 1;
+	dev->disconnected = 1;
+
+	fp->private_data = NULL;
+	put_acc_dev(dev);
 	return 0;
 }
 
@@ -844,7 +876,7 @@ static struct hid_driver acc_hid_driver = {
 static int acc_ctrlrequest(struct usb_composite_dev *cdev,
 				const struct usb_ctrlrequest *ctrl)
 {
-	struct acc_dev	*dev = _acc_dev;
+	struct acc_dev	*dev = get_acc_dev();
 	int	value = -EOPNOTSUPP;
 	struct acc_hid_dev *hid;
 	int offset;
@@ -945,6 +977,7 @@ err:
 			"%02x.%02x v%04x i%04x l%u\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
+	put_acc_dev(dev);
 	return value;
 }
 
@@ -1004,10 +1037,6 @@ kill_all_hid_devices(struct acc_dev *dev)
 	struct acc_hid_dev *hid;
 	struct list_head *entry, *temp;
 	unsigned long flags;
-
-	/* do nothing if usb accessory device doesn't exist */
-	if (!dev)
-		return;
 
 	spin_lock_irqsave(&dev->lock, flags);
 	list_for_each_safe(entry, temp, &dev->hid_list) {
@@ -1092,11 +1121,14 @@ static void acc_hid_delete(struct acc_hid_dev *hid)
 
 static void acc_hid_work(struct work_struct *data)
 {
-	struct acc_dev *dev = _acc_dev;
+	struct acc_dev *dev = get_acc_dev();
 	struct list_head	*entry, *temp;
 	struct acc_hid_dev *hid;
 	struct list_head	new_list, dead_list;
 	unsigned long flags;
+
+	if (!dev)
+		return;
 
 	INIT_LIST_HEAD(&new_list);
 
@@ -1143,6 +1175,8 @@ static void acc_hid_work(struct work_struct *data)
 			hid_destroy_device(hid->hid);
 		acc_hid_delete(hid);
 	}
+
+	put_acc_dev(dev);
 }
 
 static int acc_function_set_alt(struct usb_function *f,
@@ -1211,8 +1245,11 @@ static void acc_function_disable(struct usb_function *f)
 
 static int acc_bind_config(struct usb_configuration *c)
 {
-	struct acc_dev *dev = _acc_dev;
+	struct acc_dev  *dev = get_acc_dev();
 	int ret;
+
+	if (!dev)
+		return -ENODEV;
 
 	printk(KERN_INFO "acc_bind_config\n");
 
@@ -1237,6 +1274,7 @@ static int acc_bind_config(struct usb_configuration *c)
 	dev->function.set_alt = acc_function_set_alt;
 	dev->function.disable = acc_function_disable;
 
+	put_acc_dev(dev);
 	return usb_add_function(c, &dev->function);
 }
 
@@ -1276,13 +1314,21 @@ err:
 
 static void acc_disconnect(void)
 {
+	struct acc_dev *dev = get_acc_dev();
+
 	/* unregister all HID devices if USB is disconnected */
-	kill_all_hid_devices(_acc_dev);
+	if (dev)
+		kill_all_hid_devices(dev);
+
+	put_acc_dev(dev);
 }
 
 static void acc_cleanup(void)
 {
+	struct acc_dev *dev = _acc_dev;
+
 	misc_deregister(&acc_device);
-	kfree(_acc_dev);
+	put_acc_dev(dev);
+	kfree(dev);
 	_acc_dev = NULL;
 }
