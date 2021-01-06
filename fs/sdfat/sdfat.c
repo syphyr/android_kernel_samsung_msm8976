@@ -5155,13 +5155,11 @@ static int __init sdfat_init_inodecache(void)
 
 static void sdfat_destroy_inodecache(void)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
 	/*
 	 * Make sure all delayed rcu free inodes are flushed before we
 	 * destroy cache.
 	 */
 	rcu_barrier();
-#endif
 	kmem_cache_destroy(sdfat_inode_cachep);
 }
 
@@ -5310,13 +5308,11 @@ error:
 
 static void __exit exit_sdfat_fs(void)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 13, 0)
 	/*
 	 * Make sure all delayed rcu free inodes are flushed before we
 	 * destroy cache.
 	 */
 	rcu_barrier();
-#endif
 	sdfat_uevent_uninit();
 	sdfat_statistics_uninit();
 
