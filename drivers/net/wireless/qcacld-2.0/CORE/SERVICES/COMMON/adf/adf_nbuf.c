@@ -455,15 +455,23 @@ __adf_nbuf_reg_trace_cb(adf_nbuf_trace_update_t cb_func_ptr)
    return;
 }
 
-a_status_t
-__adf_nbuf_is_dhcp_pkt(struct sk_buff *skb)
+/**
+ * __adf_nbuf_data_is_dhcp_pkt() - check if it is DHCP packet.
+ * @data: Pointer to DHCP packet data buffer
+ *
+ * This func. checks whether it is a DHCP packet or not.
+ *
+ * Return: TRUE if it is a EAPOL packet
+ *         FALSE if not
+ */
+bool __adf_nbuf_data_is_dhcp_pkt(uint8_t *data)
 {
    a_uint16_t    SPort;
    a_uint16_t    DPort;
 
-    SPort = (a_uint16_t)(*(a_uint16_t *)(skb->data + ADF_NBUF_TRAC_IPV4_OFFSET +
+    SPort = (a_uint16_t)(*(a_uint16_t *)(data + ADF_NBUF_TRAC_IPV4_OFFSET +
                                      ADF_NBUF_TRAC_IPV4_HEADER_SIZE));
-    DPort = (a_uint16_t)(*(a_uint16_t *)(skb->data + ADF_NBUF_TRAC_IPV4_OFFSET +
+    DPort = (a_uint16_t)(*(a_uint16_t *)(data + ADF_NBUF_TRAC_IPV4_OFFSET +
                                      ADF_NBUF_TRAC_IPV4_HEADER_SIZE + sizeof(a_uint16_t)));
 
     if (((ADF_NBUF_TRAC_DHCP_SRV_PORT == adf_os_cpu_to_be16(SPort)) &&
@@ -471,27 +479,36 @@ __adf_nbuf_is_dhcp_pkt(struct sk_buff *skb)
        ((ADF_NBUF_TRAC_DHCP_CLI_PORT == adf_os_cpu_to_be16(SPort)) &&
        (ADF_NBUF_TRAC_DHCP_SRV_PORT == adf_os_cpu_to_be16(DPort))))
     {
-        return A_STATUS_OK;
+        return true;
     }
     else
     {
-        return A_STATUS_FAILED;
+        return false;
     }
 }
 
-a_status_t
-__adf_nbuf_is_eapol_pkt(struct sk_buff *skb)
+/**
+ * __adf_nbuf_data_is_eapol_pkt() - check if it is EAPOL packet.
+ * @data: Pointer to EAPOL packet data buffer
+ *
+ * This func. checks whether it is a EAPOL packet or not.
+ *
+ * Return: TRUE if it is a EAPOL packet
+ *         FALSE if not
+ */
+bool __adf_nbuf_data_is_eapol_pkt(uint8_t *data)
 {
     a_uint16_t    ether_type;
 
-    ether_type = (a_uint16_t)(*(a_uint16_t *)(skb->data + ADF_NBUF_TRAC_ETH_TYPE_OFFSET));
+    ether_type = (a_uint16_t)(*(a_uint16_t *)(data +
+                       ADF_NBUF_TRAC_ETH_TYPE_OFFSET));
     if (ADF_NBUF_TRAC_EAPOL_ETH_TYPE == adf_os_cpu_to_be16(ether_type))
     {
-        return A_STATUS_OK;
+        return true;
     }
     else
     {
-        return A_STATUS_FAILED;
+        return false;
     }
 }
 
@@ -629,5 +646,5 @@ EXPORT_SYMBOL(__adf_nbuf_get_tid);
 EXPORT_SYMBOL(__adf_nbuf_set_tid);
 EXPORT_SYMBOL(__adf_nbuf_get_exemption_type);
 EXPORT_SYMBOL(__adf_nbuf_dmamap_set_cb);
-EXPORT_SYMBOL(__adf_nbuf_is_dhcp_pkt);
-EXPORT_SYMBOL(__adf_nbuf_is_eapol_pkt);
+EXPORT_SYMBOL(__adf_nbuf_data_is_dhcp_pkt);
+EXPORT_SYMBOL(__adf_nbuf_data_is_eapol_pkt);
