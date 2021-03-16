@@ -6243,14 +6243,16 @@ static tANI_BOOLEAN csrRoamProcessResults( tpAniSirGlobal pMac, tSmeCmd *pComman
                 //Only tell upper layer is we start the BSS because Vista doesn't like multiple connection
                 //indications. If we don't start the BSS ourself, handler of eSIR_SME_JOINED_NEW_BSS will
                 //trigger the connection start indication in Vista
-                vos_mem_set(roam_info, sizeof(tCsrRoamInfo), 0);
+
                 roam_info->statusCode = pSession->joinFailStatusCode.statusCode;
                 roam_info->reasonCode = pSession->joinFailStatusCode.reasonCode;
                 //We start the IBSS (didn't find any matched IBSS out there)
                 roam_info->pBssDesc = pSirBssDesc;
                 roam_info->staId = (tANI_U8)pSmeStartBssRsp->staId;
-                vos_mem_copy(roam_info->bssid, pSirBssDesc->bssId,
-                             sizeof(tCsrBssid));
+                if (pSirBssDesc)
+                        vos_mem_copy(roam_info->bssid,
+                                     pSirBssDesc->bssId,
+                                     sizeof(roam_info->bssid));
 
                  //Remove this code once SLM_Sessionization is supported
                  //BMPS_WORKAROUND_NOT_NEEDED
@@ -6310,6 +6312,7 @@ static tANI_BOOLEAN csrRoamProcessResults( tpAniSirGlobal pMac, tSmeCmd *pComman
                 }
             }
 #endif //#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+            vos_mem_set(roam_info, sizeof(*roam_info), 0);
             roamStatus = eCSR_ROAM_IBSS_IND;
             roamResult = eCSR_ROAM_RESULT_IBSS_STARTED;
             if( CSR_IS_WDS( pProfile ) )
@@ -6330,7 +6333,6 @@ static tANI_BOOLEAN csrRoamProcessResults( tpAniSirGlobal pMac, tSmeCmd *pComman
             {
                 pSirBssDesc = NULL;
             }
-            vos_mem_set(roam_info, sizeof(tCsrRoamInfo), 0);
             roam_info->pBssDesc = pSirBssDesc;
             /* We need to associate_complete it first, because
                Associate_start already indicated. */
