@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2017, 2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -43,6 +43,7 @@
 #include "vos_utils.h"
 #include "wdi_out.h"
 #include "ol_rx_fwd.h"
+#include "ol_txrx.h"
 
 #define TLSHIM_PEER_AUTHORIZE_WAIT 50
 
@@ -1731,6 +1732,7 @@ VOS_STATUS WLANTL_ChangeSTAState(void *vos_ctx, u_int8_t sta_id,
 	int err;
 	struct txrx_tl_shim_ctx *tl_shim = vos_get_context(VOS_MODULE_ID_TL,
 							   vos_ctx);
+	VOS_STATUS status = VOS_STATUS_SUCCESS;
 
 	ENTER();
 
@@ -1743,13 +1745,15 @@ VOS_STATUS WLANTL_ChangeSTAState(void *vos_ctx, u_int8_t sta_id,
 		TLSHIM_LOGE("Invalid sta id :%d", sta_id);
 		return VOS_STATUS_E_INVAL;
 	}
-	peer = ol_txrx_peer_find_by_local_id(
+	peer = ol_txrx_peer_find_with_ref_by_local_id(
 			((pVosContextType) vos_ctx)->pdev_txrx_ctx,
 			sta_id);
 
 	if ((peer == NULL) ||
-                (adf_os_atomic_read(&peer->delete_in_progress) == 1))
-		return VOS_STATUS_E_FAULT;
+                (adf_os_atomic_read(&peer->delete_in_progress) == 1)) {
+		status = VOS_STATUS_E_FAULT;
+		goto exit;
+	}
 
 	if (sta_state == WLANTL_STA_CONNECTED)
 		txrx_state = ol_txrx_peer_state_conn;
@@ -1760,10 +1764,11 @@ VOS_STATUS WLANTL_ChangeSTAState(void *vos_ctx, u_int8_t sta_id,
 				  (u_int8_t *) peer->mac_addr.raw,
 				  txrx_state);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (roam_synch_in_progress)
-		return VOS_STATUS_SUCCESS;
+	if (roam_synch_in_progress) {
+		status = VOS_STATUS_SUCCESS;
+		goto exit;
+	}
 #endif
-
 
 	if (txrx_state == ol_txrx_peer_state_auth) {
 #ifdef QCA_SUPPORT_TXRX_VDEV_PAUSE_LL
@@ -1776,7 +1781,8 @@ VOS_STATUS WLANTL_ChangeSTAState(void *vos_ctx, u_int8_t sta_id,
 				1, peer->vdev->vdev_id);
 		if (err) {
 			TLSHIM_LOGE("Failed to set the peer state to authorized");
-			return VOS_STATUS_E_FAULT;
+			status = VOS_STATUS_E_FAULT;
+			goto exit;
 		}
 
 		if (peer->vdev->opmode == wlan_op_mode_sta) {
@@ -1798,8 +1804,11 @@ VOS_STATUS WLANTL_ChangeSTAState(void *vos_ctx, u_int8_t sta_id,
 #endif
 		}
 	}
+exit:
+	if (peer)
+		ol_txrx_peer_unref_delete(peer);
 
-	return VOS_STATUS_SUCCESS;
+	return status;
 }
 
 /*
