@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016, 2018, 2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -161,6 +161,25 @@ ol_txrx_peer_find_by_local_id(
 
     adf_os_spin_lock_bh(&pdev->local_peer_ids.lock);
     peer = pdev->local_peer_ids.map[local_peer_id];
+    adf_os_spin_unlock_bh(&pdev->local_peer_ids.lock);
+    return peer;
+}
+
+ol_txrx_peer_handle
+ol_txrx_peer_find_with_ref_by_local_id(
+    struct ol_txrx_pdev_t *pdev,
+    u_int8_t local_peer_id)
+{
+    struct ol_txrx_peer_t *peer;
+    if ((local_peer_id == OL_TXRX_INVALID_LOCAL_PEER_ID) ||
+        (local_peer_id >= OL_TXRX_NUM_LOCAL_PEER_IDS)) {
+        return NULL;
+    }
+
+    adf_os_spin_lock_bh(&pdev->local_peer_ids.lock);
+    peer = pdev->local_peer_ids.map[local_peer_id];
+    if (peer)
+	adf_os_atomic_inc(&peer->ref_cnt);
     adf_os_spin_unlock_bh(&pdev->local_peer_ids.lock);
     return peer;
 }

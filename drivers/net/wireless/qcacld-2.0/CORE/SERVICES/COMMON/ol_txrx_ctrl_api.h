@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016, 2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -909,8 +909,23 @@ ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(
     ol_txrx_pdev_handle pdev,
     u_int8_t local_peer_id);
+
+/**
+ * ol_txrx_peer_find_with_ref_by_local_id() - Find a txrx peer handle
+ * from a peer's local ID
+ * @pdev: ol txrx pdev object
+ * @local_peer_id: local peer id
+ *
+ * Find the peer with ref count taken
+ * Return: peer handle
+ */
+ol_txrx_peer_handle
+ol_txrx_peer_find_with_ref_by_local_id(
+    struct ol_txrx_pdev_t *pdev,
+    u_int8_t local_peer_id);
 #else
 #define ol_txrx_peer_find_by_local_id(pdev, local_peer_id) NULL
+#define ol_txrx_peer_find_with_ref_by_local_id(pdev, local_peer_id) NULL
 #endif
 
 typedef struct {
