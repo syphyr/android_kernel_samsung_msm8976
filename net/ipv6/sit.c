@@ -209,8 +209,6 @@ static int ipip6_tunnel_create(struct net_device *dev)
 
 	dev->rtnl_link_ops = &sit_link_ops;
 
-	dev_hold(dev);
-
 	ipip6_tunnel_link(sitn, t);
 	return 0;
 
@@ -1260,6 +1258,7 @@ static int ipip6_tunnel_init(struct net_device *dev)
 	if (!dev->tstats)
 		return -ENOMEM;
 
+	dev_hold(dev);
 	return 0;
 }
 
