@@ -61,6 +61,8 @@ struct snd_usb_audio {
 	struct usb_host_interface *ctrl_intf;	/* the audio control interface */
 };
 
+#define USB_AUDIO_IFACE_UNUSED	((void *)-1L)
+
 /*
  * Information about devices with broken descriptors
  */
