@@ -471,6 +471,7 @@ struct hdd_ipa_priv {
 	uint64_t ipa_rx_net_send_count;
 	uint64_t ipa_rx_internel_drop_count;
 	uint64_t ipa_rx_destructor_count;
+	/* Pending stat request */
         hdd_ipa_uc_stat_reason stat_req_reason;
 	struct ipa_wdi_in_params cons_pipe_in;
 	struct ipa_wdi_in_params prod_pipe_in;
@@ -1259,11 +1260,12 @@ void hdd_ipa_uc_stat_request( hdd_adapter_t *adapter, uint8_t reason)
 	}
 
 	HDD_IPA_LOG(VOS_TRACE_LEVEL_DEBUG,
-		"%s: STAT REQ Reason %d",
-		__func__, reason);
+		"%s: STAT REQ Reason %d pending %d",
+		__func__, reason, hdd_ipa->stat_req_reason);
 	vos_lock_acquire(&hdd_ipa->ipa_lock);
 	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
-		(VOS_FALSE == hdd_ipa->resource_loading)) {
+	    (VOS_FALSE == hdd_ipa->resource_loading) &&
+	    (hdd_ipa->stat_req_reason == HDD_IPA_UC_STAT_REASON_NONE)) {
 		hdd_ipa->stat_req_reason = (hdd_ipa_uc_stat_reason)reason;
 		process_wma_set_command(
 			(int)adapter->sessionId,
@@ -1676,7 +1678,8 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	}
 
 	HDD_IPA_DP_LOG(VOS_TRACE_LEVEL_DEBUG,
-		"%s, OPCODE %s", __func__, op_string[msg->op_code]);
+		"%s, OPCODE %s pending stats reason %d", __func__, op_string[msg->op_code],
+		hdd_ipa->stat_req_reason);
 
 	if ((HDD_IPA_UC_OPCODE_TX_RESUME == msg->op_code) ||
 		(HDD_IPA_UC_OPCODE_RX_RESUME == msg->op_code)) {
@@ -1926,6 +1929,9 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			ipa_stat.rx_ch_stats.num_db,
 			ipa_stat.rx_ch_stats.num_unexpected_db,
 			ipa_stat.rx_ch_stats.num_bam_int_handled);
+		vos_lock_acquire(&hdd_ipa->ipa_lock);
+		hdd_ipa->stat_req_reason = HDD_IPA_UC_STAT_REASON_NONE;
+		vos_lock_release(&hdd_ipa->ipa_lock);
 	} else if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
 		(HDD_IPA_UC_STAT_REASON_BW_CAL == hdd_ipa->stat_req_reason)) {
 		/* STATs from FW */
@@ -1946,6 +1952,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			(uc_fw_stat->rx_num_ind_drop_no_space +
 			uc_fw_stat->rx_num_ind_drop_no_buf +
 			uc_fw_stat->rx_num_pkts_indicated);
+		hdd_ipa->stat_req_reason = HDD_IPA_UC_STAT_REASON_NONE;
 		vos_lock_release(&hdd_ipa->ipa_lock);
 	} else if (HDD_IPA_UC_OPCODE_UC_READY == msg->op_code) {
 		vos_lock_acquire(&hdd_ipa->ipa_lock);
@@ -2138,7 +2145,7 @@ static VOS_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 
 	WLANTL_RegisterOPCbFnc((pVosContextType)(hdd_ctx->pvosContext),
 			hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
-
+	ipa_ctxt->stat_req_reason = HDD_IPA_UC_STAT_REASON_NONE;
 	for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
 		vos_init_work(&ipa_ctxt->uc_op_work[i].work,
 			hdd_ipa_uc_fw_op_event_handler);
@@ -2216,6 +2223,7 @@ int hdd_ipa_uc_ssr_deinit()
 		hdd_ipa->assoc_stas_map[idx].is_reserved = false;
 		hdd_ipa->assoc_stas_map[idx].sta_id = 0xFF;
 	}
+	hdd_ipa->stat_req_reason = HDD_IPA_UC_STAT_REASON_NONE;
 	vos_lock_release(&hdd_ipa->ipa_lock);
 
 	/* Full IPA driver cleanup not required since wlan driver is now
