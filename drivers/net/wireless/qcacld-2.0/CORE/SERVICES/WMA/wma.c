@@ -20773,6 +20773,7 @@ static int wma_wow_wakeup_host_event(void *handle, u_int8_t *event,
 		vos_wow_wakeup_host_event(wake_info->wake_reason);
 	}
 
+	wmi_set_target_suspend(wma->wmi_handle, FALSE);
 	vos_event_set(&wma->wma_resume_event);
 	if (param_buf->wow_packet_buffer) {
 		if (param_buf->num_wow_packet_buffer <= 4) {
@@ -22677,9 +22678,6 @@ static VOS_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 	} else {
 		WMA_LOGD("Host wakeup received");
 	}
-
-	if (VOS_STATUS_SUCCESS == vos_status)
-		wmi_set_target_suspend(wma->wmi_handle, FALSE);
 
 	return vos_status;
 }
