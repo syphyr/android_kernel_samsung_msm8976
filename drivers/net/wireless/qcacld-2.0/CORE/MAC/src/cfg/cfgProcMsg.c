@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020, 2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2948,10 +2948,15 @@ processCfgDownloadReq(tpAniSirGlobal pMac)
                 continue;
 
             dst_ptr = &pMac->cfg.gCfgSBuf[index];
-            str_cfg = (struct cfgstatic_string *)cfg_static[i].p_str_data;
-            src_ptr = str_cfg->data;
+            if (!dst_ptr)
+                continue;
 
-            if ((dst_ptr == NULL) || (str_cfg == NULL) || (src_ptr == NULL))
+            str_cfg = (struct cfgstatic_string *)cfg_static[i].p_str_data;
+            if(!str_cfg)
+		continue;
+
+            src_ptr = str_cfg->data;
+            if (!src_ptr)
                 continue;
 
             max_saved_len = *dst_ptr;
