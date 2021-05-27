@@ -2802,8 +2802,9 @@ eHalStatus csrRoamCallCallback(tpAniSirGlobal pMac, tANI_U32 sessionId, tCsrRoam
          * failure, decrement bRefAssocStartCnt.
          */
         pSession->bRefAssocStartCnt--;
-    } else if (u1 == eCSR_ROAM_SET_CHANNEL_RSP && u2 ==
-                                    eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS) {
+    } else if (u1 == eCSR_ROAM_SET_CHANNEL_RSP &&
+               u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS &&
+               pRoamInfo) {
         pSession->connectedProfile.operationChannel =
                           pRoamInfo->channelChangeRespEvent->newChannelNumber;
     }

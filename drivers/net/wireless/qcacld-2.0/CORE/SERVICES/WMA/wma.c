@@ -20629,6 +20629,9 @@ static void wma_wow_wake_up_stats(tp_wma_handle wma, uint8_t *data,
 	switch(event) {
 
 	case WOW_REASON_PATTERN_MATCH_FOUND:
+		if (!data || !len)
+			return;
+
 		if (WMA_BCAST_MAC_ADDR == *data) {
 			wma->wow_bcast_wake_up_count++;
 		} else if (WMA_MCAST_IPV4_MAC_ADDR == *data) {

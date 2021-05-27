@@ -711,6 +711,8 @@ limHandle80211Frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, tANI_U8 *pDeferMsg)
 
     *pDeferMsg= false;
     limGetBDfromRxPacket(pMac, limMsg->bodyptr, (tANI_U32 **)&pRxPacketInfo);
+    if (!pRxPacketInfo)
+        return;
 
     pHdr = WDA_GET_RX_MAC_HEADER(pRxPacketInfo);
     isFrmFt = WDA_GET_RX_FT_DONE(pRxPacketInfo);
