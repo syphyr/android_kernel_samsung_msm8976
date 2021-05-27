@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -276,6 +276,10 @@ static int ol_transfer_single_bin_file(struct ol_softc *scn,
 			one_bin_header = (FW_BIN_HEADER_T *)(
 					 (u_int8_t *)fw_entry_data
 					 + one_bin_meta_header->fst_tag_off);
+			if(!one_bin_header) {
+				status = A_ERROR;
+				goto exit;
+			}
 
                         while (one_bin_header->bin_group_id != groupid)
                         {
