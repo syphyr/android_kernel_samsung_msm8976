@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019, 2021 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2102,6 +2102,9 @@ htt_rx_restitch_mpdu_from_msdus(
          * but the RX status is usually enough
          */
         mpdu_buf = clone_nbuf_fn(head_msdu);
+
+        if (!mpdu_buf)
+            goto mpdu_stitch_fail;
 
         prev_buf = mpdu_buf;
 
