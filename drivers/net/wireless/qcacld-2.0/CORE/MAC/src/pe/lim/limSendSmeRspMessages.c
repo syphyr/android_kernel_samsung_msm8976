@@ -2014,10 +2014,9 @@ limSendSmeDeauthNtf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr, tSirResultCode
     tpPESession         psessionEntry;
     tANI_U8             sessionId;
     tANI_U32            *pMsg;
+    tSirMacAddr null_bssid = { 0, 0, 0, 0, 0, 0 };
 
     psessionEntry = peFindSessionByBssid(pMac,peerMacAddr,&sessionId);
-    if (!psessionEntry)
-        return;
 
     switch (deauthTrigger)
     {
@@ -2126,7 +2125,10 @@ limSendSmeDeauthNtf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr, tSirResultCode
             pBuf += sizeof(tSirResultCodes);
 
             //bssId
-            vos_mem_copy( pBuf, psessionEntry->bssId, sizeof(tSirMacAddr));
+	    if (!psessionEntry)
+		vos_mem_copy( pBuf, null_bssid, sizeof(tSirMacAddr));
+	    else
+		vos_mem_copy( pBuf, psessionEntry->bssId, sizeof(tSirMacAddr));
             pBuf += sizeof(tSirMacAddr);
 
             //peerMacAddr
