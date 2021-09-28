@@ -1063,7 +1063,7 @@ int udpv6_sendmsg(struct kiocb *iocb, struct sock *sk,
 	int hlimit = -1;
 	int tclass = -1;
 	int dontfrag = -1;
-	int corkreq = up->corkflag || msg->msg_flags&MSG_MORE;
+	int corkreq = READ_ONCE(up->corkflag) || msg->msg_flags&MSG_MORE;
 	int err;
 	int connected = 0;
 	int is_udplite = IS_UDPLITE(sk);
