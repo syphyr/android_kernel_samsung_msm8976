@@ -988,7 +988,7 @@ static void binder_free_buf(struct binder_proc *proc,
 	BUG_ON(buffer->data > proc->buffer + proc->buffer_size);
 
 	if (buffer->async_transaction) {
-		proc->free_async_space += size + sizeof(struct binder_buffer);
+		proc->free_async_space += buffer_size + sizeof(struct binder_buffer);
 
 		binder_debug(BINDER_DEBUG_BUFFER_ALLOC_ASYNC,
 			     "%d: binder_free_buf size %zd async free %zd\n",
