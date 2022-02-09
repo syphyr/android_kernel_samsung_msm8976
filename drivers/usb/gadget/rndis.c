@@ -658,6 +658,12 @@ static int rndis_set_response(int configNr, rndis_set_msg_type *buf)
 	u8 *xbuf;
 	u32 length;
 
+	BufLength = le32_to_cpu(buf->InformationBufferLength);
+	BufOffset = le32_to_cpu(buf->InformationBufferOffset);
+	if ((BufLength > RNDIS_MAX_TOTAL_SIZE) ||
+	    (BufOffset + 8 >= RNDIS_MAX_TOTAL_SIZE))
+		    return -EINVAL;
+
 	/* drain the response queue */
 	while ((xbuf = rndis_get_next_response(configNr, &length)))
 		rndis_free_response(configNr, xbuf);
@@ -666,9 +672,6 @@ static int rndis_set_response(int configNr, rndis_set_msg_type *buf)
 	if (!r)
 		return -ENOMEM;
 	resp = (rndis_set_cmplt_type *)r->buf;
-
-	BufLength = le32_to_cpu(buf->InformationBufferLength);
-	BufOffset = le32_to_cpu(buf->InformationBufferOffset);
 
 #ifdef	VERBOSE_DEBUG
 	pr_debug("%s: Length: %d\n", __func__, BufLength);
