@@ -55,6 +55,7 @@ extern void     arp_send(int type, int ptype, __be32 dest_ip,
 			 const unsigned char *src_hw, const unsigned char *th);
 extern int	arp_mc_map(__be32 addr, u8 *haddr, struct net_device *dev, int dir);
 extern void	arp_ifdown(struct net_device *dev);
+extern int	arp_invalidate(struct net_device *dev, __be32 ip, bool force);
 
 extern struct sk_buff *arp_create(int type, int ptype, __be32 dest_ip,
 				  struct net_device *dev, __be32 src_ip,
