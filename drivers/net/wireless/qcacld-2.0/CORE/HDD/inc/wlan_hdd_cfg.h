@@ -3632,7 +3632,7 @@ enum dot11p_mode {
 #define CFG_BPF_PACKET_FILTER_OFFLOAD           "gBpfFilterEnable"
 #define CFG_BPF_PACKET_FILTER_OFFLOAD_MIN       (0)
 #define CFG_BPF_PACKET_FILTER_OFFLOAD_MAX       (1)
-#define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
+#define CFG_BPF_PACKET_FILTER_OFFLOAD_DEFAULT   (0)
 
 #define CFG_RX_WAKELOCK_TIMEOUT_NAME         "rx_wakelock_timeout"
 #define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT      (50)
