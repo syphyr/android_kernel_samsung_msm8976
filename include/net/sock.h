@@ -1192,9 +1192,9 @@ static inline void sk_enter_memory_pressure(struct sock *sk)
 
 static inline long sk_prot_mem_limits(const struct sock *sk, int index)
 {
-	long *prot = sk->sk_prot->sysctl_mem;
+	long *prot = READ_ONCE(sk->sk_prot->sysctl_mem);
 	if (mem_cgroup_sockets_enabled && sk->sk_cgrp)
-		prot = sk->sk_cgrp->sysctl_mem;
+		prot = READ_ONCE(sk->sk_cgrp->sysctl_mem);
 	return prot[index];
 }
 
