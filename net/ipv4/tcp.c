@@ -2836,7 +2836,8 @@ static int do_tcp_getsockopt(struct sock *sk, int level,
 		val = keepalive_probes(tp);
 		break;
 	case TCP_SYNCNT:
-		val = icsk->icsk_syn_retries ? : sysctl_tcp_syn_retries;
+		val = icsk->icsk_syn_retries ? :
+			READ_ONCE(sysctl_tcp_syn_retries);
 		break;
 	case TCP_LINGER2:
 		val = READ_ONCE(tp->linger2);
