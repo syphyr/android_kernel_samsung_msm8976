@@ -121,7 +121,7 @@ static int tcp_out_of_resources(struct sock *sk, int do_reset)
 /* Calculate maximal number or retries on an orphaned socket. */
 static int tcp_orphan_retries(struct sock *sk, int alive)
 {
-	int retries = sysctl_tcp_orphan_retries; /* May be zero. */
+	int retries = READ_ONCE(sysctl_tcp_orphan_retries); /* May be zero. */
 
 	/* We know from an ICMP that something is wrong. */
 	if (sk->sk_err_soft && !alive)
@@ -202,14 +202,14 @@ static int tcp_write_timeout(struct sock *sk)
 		retry_until = icsk->icsk_syn_retries ? : sysctl_tcp_syn_retries;
 		syn_set = true;
 	} else {
-		if (retransmits_timed_out(sk, sysctl_tcp_retries1, 0, 0)) {
+		if (retransmits_timed_out(sk, READ_ONCE(sysctl_tcp_retries1), 0, 0)) {
 			/* Black hole detection */
 			tcp_mtu_probing(icsk, sk);
 
 			dst_negative_advice(sk);
 		}
 
-		retry_until = sysctl_tcp_retries2;
+		retry_until = READ_ONCE(sysctl_tcp_retries2);
 		if (sock_flag(sk, SOCK_DEAD)) {
 			const int alive = (icsk->icsk_rto < TCP_RTO_MAX);
 
@@ -323,7 +323,7 @@ static void tcp_probe_timer(struct sock *sk)
 	 * with RFCs, only probe timer combines both retransmission timeout
 	 * and probe timeout in one bottle.				--ANK
 	 */
-	max_probes = sysctl_tcp_retries2;
+	max_probes = READ_ONCE(sysctl_tcp_retries2);
 
 	if (sock_flag(sk, SOCK_DEAD)) {
 		const int alive = ((icsk->icsk_rto << icsk->icsk_backoff) < TCP_RTO_MAX);
@@ -507,7 +507,7 @@ out_reset_timer:
 		icsk->icsk_rto = min(icsk->icsk_rto << 1, TCP_RTO_MAX);
 	}
 	inet_csk_reset_xmit_timer(sk, ICSK_TIME_RETRANS, icsk->icsk_rto, TCP_RTO_MAX);
-	if (retransmits_timed_out(sk, sysctl_tcp_retries1 + 1, 0, 0))
+	if (retransmits_timed_out(sk, READ_ONCE(sysctl_tcp_retries1) + 1, 0, 0))
 		__sk_dst_reset(sk);
 
 out:;
