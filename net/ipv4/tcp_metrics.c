@@ -340,7 +340,7 @@ void tcp_update_metrics(struct sock *sk)
 	u32 val;
 	int m;
 
-	if (sysctl_tcp_nometrics_save || !dst)
+	if (READ_ONCE(sysctl_tcp_nometrics_save) || !dst)
 		return;
 
 	if (dst->flags & DST_HOST)
