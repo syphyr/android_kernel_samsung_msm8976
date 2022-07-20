@@ -1953,7 +1953,7 @@ void tcp_enter_loss(struct sock *sk, int how)
 	 * loss recovery is underway except recurring timeout(s) on
 	 * the same SND.UNA (sec 3.2). Disable F-RTO on path MTU probing
 	 */
-	tp->frto = sysctl_tcp_frto &&
+	tp->frto = READ_ONCE(sysctl_tcp_frto) &&
 		   (new_recovery || icsk->icsk_retransmits) &&
 		   !inet_csk(sk)->icsk_mtup.probe_size;
 }
