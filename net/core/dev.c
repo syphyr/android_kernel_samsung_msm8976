@@ -4213,7 +4213,7 @@ static void net_rx_action(struct softirq_action *h)
 {
 	struct softnet_data *sd = &__get_cpu_var(softnet_data);
 	unsigned long time_limit = jiffies + 2;
-	int budget = netdev_budget;
+	int budget = READ_ONCE(netdev_budget);
 	void *have;
 
 	local_irq_disable();
