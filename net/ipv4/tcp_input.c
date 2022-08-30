@@ -3338,11 +3338,11 @@ static void tcp_send_challenge_ack(struct sock *sk)
 	u32 now = jiffies / HZ;
 	u32 count;
 
-	if (now != challenge_timestamp) {
+	if (now != READ_ONCE(challenge_timestamp)) {
 		u32 ack_limit = READ_ONCE(sysctl_tcp_challenge_ack_limit);
 		u32 half = (ack_limit + 1) >> 1;
 
-		challenge_timestamp = now;
+		WRITE_ONCE(challenge_timestamp, now);
 		ACCESS_ONCE(challenge_count) =  half +
 			   reciprocal_divide(prandom_u32(),
 				ack_limit);
