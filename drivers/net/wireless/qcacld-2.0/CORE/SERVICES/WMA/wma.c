@@ -3855,7 +3855,7 @@ static int wma_extscan_hotlist_match_event_handler(void *handle,
 		return -EINVAL;
 	}
 	dest_ap = &dest_hotlist->ap[0];
-	dest_hotlist->numOfAps = event->total_entries;
+	dest_hotlist->numOfAps = numap;
 	dest_hotlist->requestId = event->config_request_id;
 	if (event->first_entry_index +
 		event->num_entries_in_page < event->total_entries)
