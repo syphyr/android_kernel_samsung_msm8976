@@ -154,7 +154,7 @@ static int mdss_ddi_id_read(struct mdss_dsi_ctrl_pdata *ctrl)
 			vdd->ddi_id_dsi[ctrl->ndx][2], vdd->ddi_id_dsi[ctrl->ndx][3],
 			vdd->ddi_id_dsi[ctrl->ndx][4]);
 	} else {
-		pr_err("%s DSI%d error", __func__, ctrl->ndx);
+		pr_err("%s DSI%d error\n", __func__, ctrl->ndx);
 		return false;
 	}
 
@@ -289,7 +289,7 @@ static int mdss_cell_id_read(struct mdss_dsi_ctrl_pdata *ctrl)
 			vdd->cell_id_dsi[ctrl->ndx][3],	vdd->cell_id_dsi[ctrl->ndx][4],
 			vdd->cell_id_dsi[ctrl->ndx][5],	vdd->cell_id_dsi[ctrl->ndx][6]);
 	} else {
-		pr_err("%s DSI%d error", __func__, ctrl->ndx);
+		pr_err("%s DSI%d error\n", __func__, ctrl->ndx);
 		//return false;	//cell ID read has been removed for this panel. But, return true so that system does not keep checking repeatedly
 	}
 
