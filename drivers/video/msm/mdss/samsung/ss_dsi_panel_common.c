@@ -896,13 +896,13 @@ int mdss_samsung_parse_hbm_candella_lux_mapping_table(struct device_node *np,
 
 	data = of_get_property(np, keystring, &len);
 	if (!data) {
-		LCD_ERR("%d, Unable to read table %s ", __LINE__, keystring);
+		LCD_ERR("%d, Unable to read table %s\n", __LINE__, keystring);
 		return -EINVAL;
 	} else
 		LCD_ERR("Success to read table %s\n", keystring);
 
 	if ((len % 4) != 0) {
-		LCD_ERR("%d, Incorrect table entries for %s",
+		LCD_ERR("%d, Incorrect table entries for %s\n",
 					__LINE__, keystring);
 		return -EINVAL;
 	}
