@@ -2904,7 +2904,7 @@ static int accessory_function_ctrlrequest(struct android_usb_function *f,
 						struct usb_composite_dev *cdev,
 						const struct usb_ctrlrequest *c)
 {
-	return acc_ctrlrequest(cdev, c);
+	return acc_ctrlrequest_composite(cdev, c);
 }
 
 static struct android_usb_function accessory_function = {
@@ -3956,7 +3956,7 @@ android_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *c)
 	 * It needs to handle control requests before it is enabled.
 	 */
 	if (value < 0)
-		value = acc_ctrlrequest(cdev, c);
+		value = acc_ctrlrequest_composite(cdev, c);
 
 	if (value < 0)
 		value = composite_setup_func(gadget, c);
