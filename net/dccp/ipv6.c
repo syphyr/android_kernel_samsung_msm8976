@@ -577,11 +577,9 @@ static struct sock *dccp_v6_request_recv_sock(struct sock *sk,
 	newnp->ipv6_fl_list = NULL;
 	newnp->pktoptions = NULL;
 	if (ireq6->pktopts != NULL) {
-		newnp->pktoptions = skb_clone(ireq6->pktopts, GFP_ATOMIC);
+		newnp->pktoptions = skb_clone_and_charge_r(ireq6->pktopts, newsk);
 		consume_skb(ireq6->pktopts);
 		ireq6->pktopts = NULL;
-		if (newnp->pktoptions)
-			skb_set_owner_r(newnp->pktoptions, newsk);
 	}
 	newnp->opt	  = NULL;
 	newnp->mcast_oif  = inet6_iif(skb);
