@@ -2163,13 +2163,15 @@ void limProcessChannelSwitchTimeout(tpAniSirGlobal pMac)
             return;
         }
 
-        /* If the channel-list that AP is asking us to switch is invalid,
-         * then we cannot switch the channel. Just disassociate from AP.
-         * We will find a better AP !!!
+        /* The channel switch request received from AP is carrying
+         * invalid channel. It's ok to ignore this channel switch
+         * request as it might be from spoof AP. If it's from genuine
+         * AP, it may lead to heart beat failure and result in
+         * disconnection. DUT can go ahead and reconnect to it/any
+         * other AP once it disconnects.
          */
-        limTearDownLinkWithAp(pMac,
-                        pMac->lim.limTimers.gLimChannelSwitchTimer.sessionId,
-                        eSIR_MAC_UNSPEC_FAILURE_REASON);
+        limLog(pMac, LOGE, FL("Invalid channel %u Ignore CSA request"),
+               channel);
         return;
     }
     limCovertChannelScanType(pMac, psessionEntry->currentOperChannel, false);
