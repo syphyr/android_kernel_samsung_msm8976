@@ -512,7 +512,7 @@ void tcp_v4_err(struct sk_buff *icmp_skb, u32 info)
 			       or Fast Open.
 			     */
 		if (!sock_owned_by_user(sk)) {
-			sk->sk_err = err;
+			WRITE_ONCE(sk->sk_err, err);
 
 			sk->sk_error_report(sk);
 
@@ -541,7 +541,7 @@ void tcp_v4_err(struct sk_buff *icmp_skb, u32 info)
 
 	inet = inet_sk(sk);
 	if (!sock_owned_by_user(sk) && inet->recverr) {
-		sk->sk_err = err;
+		WRITE_ONCE(sk->sk_err, err);
 		sk->sk_error_report(sk);
 	} else	{ /* Only an error on timeout */
 		WRITE_ONCE(sk->sk_err_soft, err);

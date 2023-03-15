@@ -70,7 +70,7 @@ int tcp_use_userconfig_sysctl_handler(ctl_table *table, int write,
 
 static void tcp_write_err(struct sock *sk)
 {
-	sk->sk_err = READ_ONCE(sk->sk_err_soft) ? : ETIMEDOUT;
+	WRITE_ONCE(sk->sk_err, READ_ONCE(sk->sk_err_soft) ? : ETIMEDOUT);
 	sk->sk_error_report(sk);
 
 	tcp_done(sk);
