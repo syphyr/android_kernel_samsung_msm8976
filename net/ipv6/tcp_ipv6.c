@@ -469,8 +469,9 @@ static void tcp_v6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 			sk->sk_error_report(sk);		/* Wake people up to see the error (see connect in sock.c) */
 
 			tcp_done(sk);
-		} else
-			sk->sk_err_soft = err;
+		} else {
+			WRITE_ONCE(sk->sk_err_soft, err);
+		}
 		goto out;
 	}
 
@@ -478,7 +479,7 @@ static void tcp_v6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
 		sk->sk_err = err;
 		sk->sk_error_report(sk);
 	} else
-		sk->sk_err_soft = err;
+		WRITE_ONCE(sk->sk_err_soft, err);
 
 out:
 	bh_unlock_sock(sk);

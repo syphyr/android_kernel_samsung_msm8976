@@ -285,7 +285,7 @@ void tcp_v4_mtu_reduced(struct sock *sk)
 	 * for the case, if this connection will not able to recover.
 	 */
 	if (mtu < dst_mtu(dst) && ip_dont_fragment(sk, dst))
-		sk->sk_err_soft = EMSGSIZE;
+		WRITE_ONCE(sk->sk_err_soft, EMSGSIZE);
 
 	mtu = dst_mtu(dst);
 
@@ -518,7 +518,7 @@ void tcp_v4_err(struct sk_buff *icmp_skb, u32 info)
 
 			tcp_done(sk);
 		} else {
-			sk->sk_err_soft = err;
+			WRITE_ONCE(sk->sk_err_soft, err);
 		}
 		goto out;
 	}
@@ -544,7 +544,7 @@ void tcp_v4_err(struct sk_buff *icmp_skb, u32 info)
 		sk->sk_err = err;
 		sk->sk_error_report(sk);
 	} else	{ /* Only an error on timeout */
-		sk->sk_err_soft = err;
+		WRITE_ONCE(sk->sk_err_soft, err);
 	}
 
 out:
