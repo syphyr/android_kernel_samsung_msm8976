@@ -70,7 +70,7 @@ int tcp_use_userconfig_sysctl_handler(ctl_table *table, int write,
 
 static void tcp_write_err(struct sock *sk)
 {
-	sk->sk_err = sk->sk_err_soft ? : ETIMEDOUT;
+	sk->sk_err = READ_ONCE(sk->sk_err_soft) ? : ETIMEDOUT;
 	sk->sk_error_report(sk);
 
 	tcp_done(sk);
@@ -99,7 +99,7 @@ static int tcp_out_of_resources(struct sock *sk, int do_reset)
 		shift++;
 
 	/* If some dubious ICMP arrived, penalize even more. */
-	if (sk->sk_err_soft)
+	if (READ_ONCE(sk->sk_err_soft))
 		shift++;
 
 	if (tcp_check_oom(sk, shift)) {
@@ -124,7 +124,7 @@ static int tcp_orphan_retries(struct sock *sk, int alive)
 	int retries = READ_ONCE(sysctl_tcp_orphan_retries); /* May be zero. */
 
 	/* We know from an ICMP that something is wrong. */
-	if (sk->sk_err_soft && !alive)
+	if (READ_ONCE(sk->sk_err_soft) && !alive)
 		retries = 0;
 
 	/* However, if socket sent something recently, select some safe
