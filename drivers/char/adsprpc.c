@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2015,2017-2019,2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022-2023, Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -218,8 +219,8 @@ struct fastrpc_mmap {
 	uintptr_t raddr;
 	struct ion_handle *handle;
 	struct ion_client *client;
-	bool is_filemap;
-	/*flag to indicate map used in process init*/
+	bool is_filemap; /* flag to indicate map used in process init */
+	unsigned int ctx_refs; /* Indicates reference count for context map */
 };
 
 struct fastrpc_channel_info {
@@ -354,7 +355,7 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 	hlist_for_each_entry_safe(map, n, &me->maps, hn) {
 		if (map->refs == 1 && map->raddr == va &&
 				map->raddr + map->len == va + len &&
-				/*Remove map if not used in process initialization*/
+				/* Remove map if not used in process initialization*/
 				!map->is_filemap) {
 			match = map;
 			hlist_del_init(&map->hn);
@@ -367,7 +368,8 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 		return 0;
 	}
 	hlist_for_each_entry_safe(map, n, &fl->maps, hn) {
-		if (map->refs == 1 && map->raddr == va &&
+		/* Remove if only one reference map and no context map */
+		if (map->refs == 1 && !map->ctx_refs && map->raddr == va &&
 				map->raddr + map->len == va + len &&
 				/* Remove map if not used in process initialization*/
 				!map->is_filemap) {
@@ -401,12 +403,12 @@ static void fastrpc_mmap_free(struct fastrpc_mmap *map)
 	}
 	if (map->flags == ADSP_MMAP_HEAP_ADDR) {
 		map->refs--;
-		if (!map->refs)
+		if (!map->refs && !map->ctx_refs)
 			hlist_del_init(&map->hn);
 	} else {
 		fl = map->fl;
 		map->refs--;
-		if (!map->refs)
+		if (!map->refs && !map->ctx_refs)
 			hlist_del_init(&map->hn);
 	}
 	if (map->refs)
@@ -707,8 +709,11 @@ static void context_free(struct smq_invoke_ctx *ctx)
 	hlist_del_init(&ctx->hn);
 	spin_unlock(&ctx->fl->hlock);
 	mutex_lock(&ctx->fl->map_mutex);
-	for (i = 0; i < nbufs; ++i)
+	for (i = 0; i < nbufs; ++i) {
+		if (ctx->maps[i] && ctx->maps[i]->ctx_refs)
+			ctx->maps[i]->ctx_refs--;
 		fastrpc_mmap_free(ctx->maps[i]);
+	}
 	mutex_unlock(&ctx->fl->map_mutex);
 	fastrpc_buf_free(ctx->buf, 1);
 	fastrpc_buf_free(ctx->lbuf, 1);
@@ -860,6 +865,8 @@ static int get_args(uint32_t kernel, struct smq_invoke_ctx *ctx)
 				goto bail;
 			}
 		}
+		if (ctx->maps[i])
+			ctx->maps[i]->ctx_refs++;
 		mutex_unlock(&ctx->fl->map_mutex);
 		ipage += 1;
 	}
@@ -1047,6 +1054,8 @@ static int put_args(uint32_t kernel, struct smq_invoke_ctx *ctx,
 				goto bail;
 		} else {
 			mutex_lock(&ctx->fl->map_mutex);
+			if (ctx->maps[i]->ctx_refs)
+				ctx->maps[i]->ctx_refs--;
 			fastrpc_mmap_free(ctx->maps[i]);
 			mutex_unlock(&ctx->fl->map_mutex);
 			ctx->maps[i] = NULL;
@@ -1772,6 +1781,7 @@ static int fastrpc_mmap_create(struct fastrpc_file *fl, int fd, uintptr_t va,
 	map->fl = fl;
 	map->fd = fd;
 	map->is_filemap = false;
+	map->ctx_refs = 0;
 	if (mflags == ADSP_MMAP_HEAP_ADDR) {
 		map->apps = me;
 		map->fl = NULL;
