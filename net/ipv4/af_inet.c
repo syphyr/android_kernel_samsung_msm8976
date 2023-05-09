@@ -856,7 +856,7 @@ int inet_shutdown(struct socket *sock, int how)
 		/* Hack to wake up other listeners, who can poll for
 		   POLLHUP, even on eg. unconnected UDP sockets -- RR */
 	default:
-		sk->sk_shutdown |= how;
+		WRITE_ONCE(sk->sk_shutdown, sk->sk_shutdown | how);
 		if (sk->sk_prot->shutdown)
 			sk->sk_prot->shutdown(sk, how);
 		break;
