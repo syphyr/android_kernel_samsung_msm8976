@@ -131,7 +131,7 @@ struct pneigh_entry {
 #endif
 	struct net_device	*dev;
 	u8			flags;
-	u8			key[0];
+	u32			key[0];
 };
 
 /*
