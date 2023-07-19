@@ -1175,7 +1175,12 @@ static inline int keepalive_intvl_when(const struct tcp_sock *tp)
 
 static inline int keepalive_time_when(const struct tcp_sock *tp)
 {
-	return tp->keepalive_time ? : READ_ONCE(sysctl_tcp_keepalive_time);
+	int val;
+
+	/* Paired with WRITE_ONCE() in do_tcp_setsockopt() */
+	val = READ_ONCE(tp->keepalive_time);
+
+	return val ? : READ_ONCE(sysctl_tcp_keepalive_time);
 }
 
 static inline int keepalive_probes(const struct tcp_sock *tp)
