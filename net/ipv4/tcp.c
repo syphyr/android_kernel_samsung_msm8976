@@ -2584,7 +2584,8 @@ static int do_tcp_setsockopt(struct sock *sk, int level,
 		if (val < 1 || val > MAX_TCP_KEEPIDLE)
 			err = -EINVAL;
 		else {
-			tp->keepalive_time = val * HZ;
+			/* Paired with WRITE_ONCE() in keepalive_time_when() */
+			WRITE_ONCE(tp->keepalive_time, val * HZ);
 			if (sock_flag(sk, SOCK_KEEPOPEN) &&
 			    !((1 << sk->sk_state) &
 			      (TCPF_CLOSE | TCPF_LISTEN))) {
