@@ -52,10 +52,11 @@ static bool tcp_metric_locked(struct tcp_metrics_block *tm,
 	return READ_ONCE(tm->tcpm_lock) & (1 << idx);
 }
 
-static u32 tcp_metric_get(struct tcp_metrics_block *tm,
+static u32 tcp_metric_get(const struct tcp_metrics_block *tm,
 			  enum tcp_metric_index idx)
 {
-	return tm->tcpm_vals[idx];
+	/* Paired with WRITE_ONCE() in tcp_metric_set() */
+	return READ_ONCE(tm->tcpm_vals[idx]);
 }
 
 static u32 tcp_metric_get_jiffies(struct tcp_metrics_block *tm,
@@ -68,7 +69,8 @@ static void tcp_metric_set(struct tcp_metrics_block *tm,
 			   enum tcp_metric_index idx,
 			   u32 val)
 {
-	tm->tcpm_vals[idx] = val;
+	/* Paired with READ_ONCE() in tcp_metric_get() */
+	WRITE_ONCE(tm->tcpm_vals[idx], val);
 }
 
 static void tcp_metric_set_msecs(struct tcp_metrics_block *tm,
@@ -121,11 +123,14 @@ static void tcpm_suck_dst(struct tcp_metrics_block *tm, struct dst_entry *dst,
 	/* Paired with READ_ONCE() in tcp_metric_locked() */
 	WRITE_ONCE(tm->tcpm_lock, val);
 
-	tm->tcpm_vals[TCP_METRIC_RTT] = dst_metric_raw(dst, RTAX_RTT);
-	tm->tcpm_vals[TCP_METRIC_RTTVAR] = dst_metric_raw(dst, RTAX_RTTVAR);
-	tm->tcpm_vals[TCP_METRIC_SSTHRESH] = dst_metric_raw(dst, RTAX_SSTHRESH);
-	tm->tcpm_vals[TCP_METRIC_CWND] = dst_metric_raw(dst, RTAX_CWND);
-	tm->tcpm_vals[TCP_METRIC_REORDERING] = dst_metric_raw(dst, RTAX_REORDERING);
+	tcp_metric_set(tm, TCP_METRIC_RTT, dst_metric_raw(dst, RTAX_RTT));
+	tcp_metric_set(tm, TCP_METRIC_RTTVAR, dst_metric_raw(dst, RTAX_RTTVAR));
+	tcp_metric_set(tm, TCP_METRIC_SSTHRESH,
+		       dst_metric_raw(dst, RTAX_SSTHRESH));
+	tcp_metric_set(tm, TCP_METRIC_CWND,
+		       dst_metric_raw(dst, RTAX_CWND));
+	tcp_metric_set(tm, TCP_METRIC_REORDERING,
+		       dst_metric_raw(dst, RTAX_REORDERING));
 	tm->tcpm_ts = 0;
 	tm->tcpm_ts_stamp = 0;
 	if (fastopen_clear) {
@@ -781,7 +786,9 @@ static int tcp_metrics_fill_info(struct sk_buff *msg,
 		if (!nest)
 			goto nla_put_failure;
 		for (i = 0; i < TCP_METRIC_MAX + 1; i++) {
-			if (!tm->tcpm_vals[i])
+			u32 val = tcp_metric_get(tm, i);
+
+			if (!val)
 				continue;
 			if (nla_put_u32(msg, i + 1, tm->tcpm_vals[i]) < 0)
 				goto nla_put_failure;
