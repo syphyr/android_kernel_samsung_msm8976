@@ -222,7 +222,8 @@ static void irqsoff_trace_open(struct trace_iterator *iter)
 {
 	if (is_graph())
 		graph_trace_open(iter);
-
+	else
+		iter->private = NULL;
 }
 
 static void irqsoff_trace_close(struct trace_iterator *iter)
