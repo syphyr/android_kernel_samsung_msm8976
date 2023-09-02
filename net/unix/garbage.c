@@ -139,7 +139,7 @@ void unix_inflight(struct user_struct *user, struct file *fp)
 		}
 		unix_tot_inflight++;
 	}
-	user->unix_inflight++;
+	WRITE_ONCE(user->unix_inflight, user->unix_inflight + 1);
 	spin_unlock(&unix_gc_lock);
 }
 
@@ -159,7 +159,7 @@ void unix_notinflight(struct user_struct *user, struct file *fp)
 			list_del_init(&u->link);
 		unix_tot_inflight--;
 	}
-	user->unix_inflight--;
+	WRITE_ONCE(user->unix_inflight, user->unix_inflight - 1);
 	spin_unlock(&unix_gc_lock);
 }
 
