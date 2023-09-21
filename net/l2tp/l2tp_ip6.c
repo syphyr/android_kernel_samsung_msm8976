@@ -528,7 +528,6 @@ static int l2tp_ip6_sendmsg(struct kiocb *iocb, struct sock *sk,
 	 */
 	if (len > INT_MAX - transhdrlen)
 		return -EMSGSIZE;
-	ulen = len + transhdrlen;
 
 	/* Mirror BSD error message compatibility */
 	if (msg->msg_flags & MSG_OOB)
@@ -648,6 +647,7 @@ static int l2tp_ip6_sendmsg(struct kiocb *iocb, struct sock *sk,
 
 back_from_confirm:
 	lock_sock(sk);
+	ulen = len + skb_queue_empty(&sk->sk_write_queue) ? transhdrlen : 0;
 	err = ip6_append_data(sk, ip_generic_getfrag, msg->msg_iov,
 			      ulen, transhdrlen, hlimit, tclass, opt,
 			      &fl6, (struct rt6_info *)dst,
