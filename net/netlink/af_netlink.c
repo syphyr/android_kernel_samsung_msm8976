@@ -118,7 +118,7 @@ static void netlink_overrun(struct sock *sk)
 
 	if (!(nlk->flags & NETLINK_RECV_NO_ENOBUFS)) {
 		if (!test_and_set_bit(NETLINK_CONGESTED, &nlk_sk(sk)->state)) {
-			sk->sk_err = ENOBUFS;
+			WRITE_ONCE(sk->sk_err, ENOBUFS);
 			sk->sk_error_report(sk);
 		}
 	}
@@ -516,7 +516,7 @@ static unsigned int netlink_poll(struct file *file, struct socket *sock,
 		while (nlk->cb_running && netlink_dump_space(nlk)) {
 			err = netlink_dump(sk);
 			if (err < 0) {
-				sk->sk_err = -err;
+				WRITE_ONCE(sk->sk_err, -err);
 				sk->sk_error_report(sk);
 				break;
 			}
@@ -1933,7 +1933,7 @@ static int do_one_set_err(struct sock *sk, struct netlink_set_err_data *p)
 		goto out;
 	}
 
-	sk->sk_err = p->code;
+	WRITE_ONCE(sk->sk_err, p->code);
 	sk->sk_error_report(sk);
 out:
 	return ret;
@@ -2303,7 +2303,7 @@ static int netlink_recvmsg(struct kiocb *kiocb, struct socket *sock,
 	    atomic_read(&sk->sk_rmem_alloc) <= sk->sk_rcvbuf / 2) {
 		ret = netlink_dump(sk);
 		if (ret) {
-			sk->sk_err = -ret;
+			WRITE_ONCE(sk->sk_err, -ret);
 			sk->sk_error_report(sk);
 		}
 	}
@@ -2709,7 +2709,7 @@ void netlink_ack(struct sk_buff *in_skb, struct nlmsghdr *nlh, int err)
 				    in_skb->sk->sk_protocol,
 				    NETLINK_CB(in_skb).portid);
 		if (sk) {
-			sk->sk_err = ENOBUFS;
+			WRITE_ONCE(sk->sk_err, ENOBUFS);
 			sk->sk_error_report(sk);
 			sock_put(sk);
 		}
