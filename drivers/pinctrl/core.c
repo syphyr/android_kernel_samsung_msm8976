@@ -939,10 +939,10 @@ EXPORT_SYMBOL_GPL(pinctrl_lookup_state);
 static int pinctrl_commit_state(struct pinctrl *p, struct pinctrl_state *state)
 {
 	struct pinctrl_setting *setting, *setting2;
-	struct pinctrl_state *old_state = p->state;
+	struct pinctrl_state *old_state = READ_ONCE(p->state);
 	int ret;
 
-	if (p->state) {
+	if (old_state) {
 		/*
 		 * The set of groups with a mux configuration in the old state
 		 * may not be identical to the set of groups with a mux setting
@@ -952,7 +952,7 @@ static int pinctrl_commit_state(struct pinctrl *p, struct pinctrl_state *state)
 		 * but not in the new state, this code puts that group into a
 		 * safe/disabled state.
 		 */
-		list_for_each_entry(setting, &p->state->settings, node) {
+		list_for_each_entry(setting, &old_state->settings, node) {
 			bool found = false;
 			if (setting->type != PIN_MAP_TYPE_MUX_GROUP)
 				continue;
