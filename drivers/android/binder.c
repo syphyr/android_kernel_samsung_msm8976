@@ -823,8 +823,7 @@ static struct binder_buffer *binder_alloc_buf(struct binder_proc *proc,
 	/* Pad 0-size buffers so they get assigned unique addresses */
 	size = max(size, sizeof(void *));
 
-	if (is_async &&
-	    proc->free_async_space < size + sizeof(struct binder_buffer)) {
+	if (is_async && proc->free_async_space < size) {
 		binder_debug(BINDER_DEBUG_BUFFER_ALLOC,
 			     "%d: binder_alloc_buf size %zd failed, no async space left\n",
 			      proc->pid, size);
@@ -896,7 +895,7 @@ static struct binder_buffer *binder_alloc_buf(struct binder_proc *proc,
 	buffer->extra_buffers_size = extra_buffers_size;
 	buffer->async_transaction = is_async;
 	if (is_async) {
-		proc->free_async_space -= size + sizeof(struct binder_buffer);
+		proc->free_async_space -= size;
 		binder_debug(BINDER_DEBUG_BUFFER_ALLOC_ASYNC,
 			     "%d: binder_alloc_buf size %zd async free %zd\n",
 			      proc->pid, size, proc->free_async_space);
@@ -990,8 +989,7 @@ static void binder_free_buf(struct binder_proc *proc,
 	BUG_ON(buffer->data > proc->buffer + proc->buffer_size);
 
 	if (buffer->async_transaction) {
-		proc->free_async_space += buffer_size + sizeof(struct binder_buffer);
-
+		proc->free_async_space += buffer_size;
 		binder_debug(BINDER_DEBUG_BUFFER_ALLOC_ASYNC,
 			     "%d: binder_free_buf size %zd async free %zd\n",
 			      proc->pid, size, proc->free_async_space);
