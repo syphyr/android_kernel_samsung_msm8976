@@ -42,6 +42,7 @@
 #include <linux/kthread.h>
 #include <linux/delay.h>
 #include <linux/slab.h>
+#include <linux/string.h>
 #include <asm/uaccess.h>
 
 
@@ -49,6 +50,8 @@
 #define PFX			RNG_MODULE_NAME ": "
 #define RNG_MISCDEV_MINOR	183 /* official */
 
+
+#define RNG_BUFFER_SIZE (SMP_CACHE_BYTES < 32 ? 32 : SMP_CACHE_BYTES)
 
 static struct hwrng *current_rng;
 static struct task_struct *hwrng_fill;
@@ -66,7 +69,7 @@ static void start_khwrngd(void);
 
 static size_t rng_buffer_size(void)
 {
-	return SMP_CACHE_BYTES < 32 ? 32 : SMP_CACHE_BYTES;
+	return RNG_BUFFER_SIZE;
 }
 
 static inline int hwrng_init(struct hwrng *rng)
@@ -122,6 +125,7 @@ static inline int rng_get_data(struct hwrng *rng, u8 *buffer, size_t size,
 static ssize_t rng_dev_read(struct file *filp, char __user *buf,
 			    size_t size, loff_t *offp)
 {
+	u8 buffer[RNG_BUFFER_SIZE];
 	ssize_t ret = 0;
 	int err = 0;
 	int bytes_read, len;
@@ -144,33 +148,35 @@ static ssize_t rng_dev_read(struct file *filp, char __user *buf,
 			if (bytes_read < 0) {
 				err = bytes_read;
 				goto out_unlock;
-			}
-			data_avail = bytes_read;
-		}
-
-		if (!data_avail) {
-			if (filp->f_flags & O_NONBLOCK) {
+			} else if (bytes_read == 0 &&
+				   (filp->f_flags & O_NONBLOCK)) {
 				err = -EAGAIN;
 				goto out_unlock;
 			}
-		} else {
-			len = data_avail;
+
+			data_avail = bytes_read;
+		}
+
+		len = data_avail;
+		if (len) {
 			if (len > size)
 				len = size;
 
 			data_avail -= len;
 
-			if (copy_to_user(buf + ret, rng_buffer + data_avail,
-								len)) {
+			memcpy(buffer, rng_buffer + data_avail, len);
+		}
+		mutex_unlock(&rng_mutex);
+
+		if (len) {
+			if (copy_to_user(buf + ret, buffer, len)) {
 				err = -EFAULT;
-				goto out_unlock;
+				goto out;
 			}
 
 			size -= len;
 			ret += len;
 		}
-
-		mutex_unlock(&rng_mutex);
 
 		if (need_resched())
 			schedule_timeout_interruptible(1);
@@ -181,6 +187,7 @@ static ssize_t rng_dev_read(struct file *filp, char __user *buf,
 		}
 	}
 out:
+	memzero_explicit(buffer, sizeof(buffer));
 	return ret ? : err;
 out_unlock:
 	mutex_unlock(&rng_mutex);
