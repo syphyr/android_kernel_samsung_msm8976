@@ -444,6 +444,8 @@ static netdev_tx_t ipgre_xmit(struct sk_buff *skb,
 		goto out;
 
 	if (dev->header_ops) {
+		int pull_len = tunnel->hlen + sizeof(struct iphdr);
+
 		/* Need space for new headers */
 		if (skb_cow_head(skb, dev->needed_headroom -
 				      (tunnel->hlen + sizeof(struct iphdr))))
@@ -451,10 +453,11 @@ static netdev_tx_t ipgre_xmit(struct sk_buff *skb,
 
 		tnl_params = (const struct iphdr *)skb->data;
 
-		/* Pull skb since ip_tunnel_xmit() needs skb->data pointing
-		 * to gre header.
-		 */
-		skb_pull(skb, tunnel->hlen + sizeof(struct iphdr));
+		if (!pskb_network_may_pull(skb, pull_len))
+			goto free_skb;
+
+		/* ip_tunnel_xmit() needs skb->data pointing to gre header. */
+		skb_pull(skb, pull_len);
 	} else {
 		if (skb_cow_head(skb, dev->needed_headroom))
 			goto free_skb;
