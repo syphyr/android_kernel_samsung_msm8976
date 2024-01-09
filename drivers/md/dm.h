@@ -18,6 +18,9 @@
 #include <linux/completion.h>
 #include <linux/kobject.h>
 
+#define DM_MAX_TARGETS                 1048576
+#define DM_MAX_TARGET_PARAMS           1024
+
 /*
  * Suspend feature flags
  */
