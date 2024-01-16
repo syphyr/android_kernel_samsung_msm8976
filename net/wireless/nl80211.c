@@ -2418,6 +2418,7 @@ static int nl80211_dump_interface(struct sk_buff *skb, struct netlink_callback *
 		}
 		mutex_unlock(&rdev->devlist_mtx);
 
+		if_start = 0;
 		wp_idx++;
 	}
  out:
