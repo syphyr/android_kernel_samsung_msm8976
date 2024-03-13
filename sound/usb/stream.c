@@ -296,6 +296,8 @@ static struct snd_pcm_chmap_elem *convert_chmap(int channels, unsigned int bits,
 	for (; bits && *maps; maps++, bits >>= 1) {
 		if (bits & 1)
 			chmap->map[c++] = *maps;
+		if (c == chmap->channels)
+			 break;
 	}
 
 	for (; c < channels; c++)
