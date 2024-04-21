@@ -353,7 +353,7 @@ struct binder_proc {
 	wait_queue_head_t wait;
 	struct binder_stats stats;
 	struct list_head delivered_death;
-	int max_threads;
+	u32 max_threads;
 	int requested_threads;
 	int requested_threads_started;
 	int ready_threads;
