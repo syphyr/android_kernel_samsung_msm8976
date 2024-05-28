@@ -602,6 +602,7 @@ extern bool tcp_schedule_loss_probe(struct sock *sk);
 extern void tcp_cwnd_application_limited(struct sock *sk);
 extern void tcp_resume_early_retransmit(struct sock *sk);
 extern void tcp_rearm_rto(struct sock *sk);
+extern void tcp_done_with_error(struct sock *sk, int err);
 extern void tcp_reset(struct sock *sk);
 
 /* tcp_timer.c */
