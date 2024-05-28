@@ -3854,23 +3854,11 @@ static inline bool tcp_sequence(const struct tcp_sock *tp, u32 seq, u32 end_seq)
 		!after(seq, tp->rcv_nxt + tcp_receive_window(tp));
 }
 
-/* When we get a reset we do this. */
-void tcp_reset(struct sock *sk)
+
+void tcp_done_with_error(struct sock *sk, int err)
 {
-	/* We want the right error as BSD sees it (and indeed as we do). */
-	switch (sk->sk_state) {
-	case TCP_SYN_SENT:
-		WRITE_ONCE(sk->sk_err, ECONNREFUSED);
-		break;
-	case TCP_CLOSE_WAIT:
-		WRITE_ONCE(sk->sk_err, EPIPE);
-		break;
-	case TCP_CLOSE:
-		return;
-	default:
-		WRITE_ONCE(sk->sk_err, ECONNRESET);
-	}
 	/* This barrier is coupled with smp_rmb() in tcp_poll() */
+	WRITE_ONCE(sk->sk_err, err);
 	smp_wmb();
 
 	tcp_write_queue_purge(sk);
@@ -3878,6 +3866,28 @@ void tcp_reset(struct sock *sk)
 
 	if (!sock_flag(sk, SOCK_DEAD))
 		sk->sk_error_report(sk);
+}
+EXPORT_SYMBOL(tcp_done_with_error);
+
+/* When we get a reset we do this. */
+void tcp_reset(struct sock *sk)
+{
+	int err;
+
+	/* We want the right error as BSD sees it (and indeed as we do). */
+	switch (sk->sk_state) {
+	case TCP_SYN_SENT:
+		err = ECONNREFUSED;
+		break;
+	case TCP_CLOSE_WAIT:
+		err = EPIPE;
+		break;
+	case TCP_CLOSE:
+		return;
+	default:
+		err = ECONNRESET;
+	}
+	tcp_done_with_error(sk, err);
 }
 
 /*
