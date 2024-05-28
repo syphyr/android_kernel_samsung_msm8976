@@ -511,15 +511,10 @@ void tcp_v4_err(struct sk_buff *icmp_skb, u32 info)
 			       It can f.e. if SYNs crossed,
 			       or Fast Open.
 			     */
-		if (!sock_owned_by_user(sk)) {
-			WRITE_ONCE(sk->sk_err, err);
-
-			sk->sk_error_report(sk);
-
-			tcp_done(sk);
-		} else {
+		if (!sock_owned_by_user(sk))
+			tcp_done_with_error(sk, err);
+		else
 			WRITE_ONCE(sk->sk_err_soft, err);
-		}
 		goto out;
 	}
 
