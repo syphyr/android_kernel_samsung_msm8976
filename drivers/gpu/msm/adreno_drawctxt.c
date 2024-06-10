@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -578,9 +578,6 @@ int adreno_drawctxt_switch(struct adreno_device *adreno_dev,
 	if (rb->drawctxt_active == drawctxt)
 		return ret;
 
-	trace_adreno_drawctxt_switch(rb,
-		drawctxt, flags);
-
 	/* Get a refcount to the new instance */
 	if (drawctxt) {
 		if (!_kgsl_context_get(&drawctxt->base))
@@ -595,13 +592,21 @@ int adreno_drawctxt_switch(struct adreno_device *adreno_dev,
 	if (ret) {
 		KGSL_DRV_ERR(device,
 			"Failed to set pagetable on rb %d\n", rb->id);
-		return ret;
+		goto err;
 	}
 
 	/* Put the old instance of the active drawctxt */
 	if (rb->drawctxt_active)
 		kgsl_context_put(&rb->drawctxt_active->base);
 
+	trace_adreno_drawctxt_switch(rb,
+		drawctxt, flags);
+
 	rb->drawctxt_active = drawctxt;
+
 	return 0;
+err:
+	if (drawctxt)
+		kgsl_context_put(&drawctxt->base);
+	return ret;
 }
