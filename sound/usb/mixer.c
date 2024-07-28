@@ -1398,6 +1398,13 @@ static int parse_audio_feature_unit(struct mixer_build *state, int unitid, void 
 		}
 	}
 
+	if (channels > 32) {
+		snd_printk(KERN_ERR
+			       "usbmixer: too many channels (%d) in unit %d\n",
+			       channels, unitid);
+		return -EINVAL;
+	}
+
 	/* parse the source unit */
 	if ((err = parse_audio_unit(state, hdr->bSourceID)) < 0)
 		return err;
