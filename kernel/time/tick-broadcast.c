@@ -671,7 +671,6 @@ static void broadcast_shutdown_local(struct clock_event_device *bc,
 
 static void broadcast_move_bc(int deadcpu)
 {
-	struct tick_device *td = this_cpu_ptr(&tick_cpu_device);
 	struct clock_event_device *bc = tick_broadcast_device.evtdev;
 
 	if (!bc || !broadcast_needs_cpu(bc, deadcpu))
@@ -695,6 +694,8 @@ static void broadcast_move_bc(int deadcpu)
 	 * device to avoid the starvation.
 	 */
 	if (tick_check_broadcast_expired()) {
+		struct tick_device *td = this_cpu_ptr(&tick_cpu_device);
+
 		cpumask_clear_cpu(smp_processor_id(), tick_broadcast_force_mask);
 		tick_program_event(td->evtdev->next_event, 1);
 	}
