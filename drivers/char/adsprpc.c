@@ -353,9 +353,10 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 
 	spin_lock(&me->hlock);
 	hlist_for_each_entry_safe(map, n, &me->maps, hn) {
-		if (map->refs == 1 && map->raddr == va &&
-				map->raddr + map->len == va + len &&
-				/* Remove map if not used in process initialization*/
+		if (map->refs == 1 &&
+			map->raddr == va &&
+			map->raddr + map->len == va + len &&
+				/* Remove map if not used in process initialization */
 				!map->is_filemap) {
 			match = map;
 			hlist_del_init(&map->hn);
@@ -369,9 +370,11 @@ static int fastrpc_mmap_remove(struct fastrpc_file *fl, uintptr_t va,
 	}
 	hlist_for_each_entry_safe(map, n, &fl->maps, hn) {
 		/* Remove if only one reference map and no context map */
-		if (map->refs == 1 && !map->ctx_refs && map->raddr == va &&
-				map->raddr + map->len == va + len &&
-				/* Remove map if not used in process initialization*/
+		if (map->refs == 1 &&
+			!map->ctx_refs &&
+			map->raddr == va &&
+			map->raddr + map->len == va + len &&
+				/* Remove map if not used in process initialization */
 				!map->is_filemap) {
 			match = map;
 			hlist_del_init(&map->hn);
@@ -402,12 +405,14 @@ static void fastrpc_mmap_free(struct fastrpc_mmap *map)
 		return;
 	}
 	if (map->flags == ADSP_MMAP_HEAP_ADDR) {
-		map->refs--;
-		if (!map->refs && !map->ctx_refs)
+		if (map->refs)
+			map->refs--;
+		if (!map->refs)
 			hlist_del_init(&map->hn);
 	} else {
 		fl = map->fl;
-		map->refs--;
+		if (map->refs)
+			map->refs--;
 		if (!map->refs && !map->ctx_refs)
 			hlist_del_init(&map->hn);
 	}
