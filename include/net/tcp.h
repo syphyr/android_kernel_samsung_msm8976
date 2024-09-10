@@ -1704,9 +1704,24 @@ static inline s32 tcp_rto_delta(const struct sock *sk)
 {
 	const struct sk_buff *skb = tcp_write_queue_head(sk);
 	const u32 rto = inet_csk(sk)->icsk_rto;
-	const u32 rto_time_stamp = TCP_SKB_CB(skb)->when + rto;
+	if (likely(skb)) {
+		const u32 rto_time_stamp = TCP_SKB_CB(skb)->when + rto;
 
-	return (s32)(rto_time_stamp - tcp_time_stamp);
+		return (s32)(rto_time_stamp - tcp_time_stamp);
+	} else {
+		WARN_ONCE(1,
+			"tcp write queue emtpy: "
+			"out:%u sacked:%u lost:%u retrans:%u "
+			"tlp_high_seq:%u sk_state:%u ca_state:%u "
+			"advmss:%u mss_cache:%u pmtu:%u\n",
+			tcp_sk(sk)->packets_out, tcp_sk(sk)->sacked_out,
+			tcp_sk(sk)->lost_out, tcp_sk(sk)->retrans_out,
+			tcp_sk(sk)->tlp_high_seq, sk->sk_state,
+			inet_csk(sk)->icsk_ca_state,
+			tcp_sk(sk)->advmss, tcp_sk(sk)->mss_cache,
+			inet_csk(sk)->icsk_pmtu_cookie);
+		return rto;
+	}
 }
 
 #endif	/* _TCP_H */
