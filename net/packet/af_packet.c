@@ -2825,15 +2825,15 @@ static int packet_create(struct net *net, struct socket *sock, int protocol,
 	if (sock->type == SOCK_PACKET)
 		sock->ops = &packet_ops_spkt;
 
-	sock_init_data(sock, sk);
-
 	po = pkt_sk(sk);
-	sk->sk_family = PF_PACKET;
-	po->num = proto;
-
 	err = packet_alloc_pending(po);
 	if (err)
-		goto out2;
+		goto out_sk_free;
+
+	sock_init_data(sock, sk);
+
+	sk->sk_family = PF_PACKET;
+	po->num = proto;
 
 	packet_cached_dev_reset(po);
 
@@ -2868,7 +2868,7 @@ static int packet_create(struct net *net, struct socket *sock, int protocol,
 	preempt_enable();
 
 	return 0;
-out2:
+out_sk_free:
 	sk_free(sk);
 out:
 	return err;
