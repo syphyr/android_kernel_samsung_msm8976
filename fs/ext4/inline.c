@@ -386,7 +386,7 @@ out:
 }
 
 int ext4_prepare_inline_data(handle_t *handle, struct inode *inode,
-			     unsigned int len)
+			     loff_t len)
 {
 	int ret, size, no_expand;
 	struct ext4_inode_info *ei = EXT4_I(inode);
