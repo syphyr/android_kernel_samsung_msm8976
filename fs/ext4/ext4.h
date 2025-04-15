@@ -2644,7 +2644,7 @@ extern void ext4_write_inline_data(struct inode *inode,
 				   void *buffer, loff_t pos,
 				   unsigned int len);
 extern int ext4_prepare_inline_data(handle_t *handle, struct inode *inode,
-				    unsigned int len);
+				    loff_t len);
 extern int ext4_init_inline_data(handle_t *handle, struct inode *inode,
 				 unsigned int len);
 extern int ext4_destroy_inline_data(handle_t *handle, struct inode *inode);
