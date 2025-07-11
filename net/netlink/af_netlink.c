@@ -2523,12 +2523,12 @@ static int netlink_dump(struct sock *sk)
 	struct netlink_sock *nlk = nlk_sk(sk);
 	struct netlink_callback *cb;
 	struct sk_buff *skb = NULL;
+	unsigned int rmem, rcvbuf;
 	struct nlmsghdr *nlh;
 	size_t max_recvmsg_len;
 	struct module *module;
 	int len, err = -ENOBUFS;
 	int alloc_min_size;
-	unsigned int rmem;
 	int alloc_size;
 
 	mutex_lock(nlk->cb_mutex);
@@ -2560,8 +2560,9 @@ static int netlink_dump(struct sock *sk)
 	if (!skb)
 		goto errout_skb;
 
+	rcvbuf = READ_ONCE(sk->sk_rcvbuf);
 	rmem = atomic_add_return(skb->truesize, &sk->sk_rmem_alloc);
-	if (!netlink_rx_is_mmaped(sk) && rmem >= READ_ONCE(sk->sk_rcvbuf)) {
+	if (!netlink_rx_is_mmaped(sk) && rmem != skb->truesize && rmem >= rcvbuf) {
 		atomic_sub(skb->truesize, &sk->sk_rmem_alloc);
 		goto errout_skb;
 	}
