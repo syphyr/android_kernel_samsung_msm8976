@@ -5980,7 +5980,7 @@ void *__init alloc_large_system_hash(const char *tablename,
 	printk(KERN_INFO "%s hash table entries: %ld (order: %d, %lu bytes)\n",
 	       tablename,
 	       (1UL << log2qty),
-	       ilog2(size) - PAGE_SHIFT,
+	       get_order(size),
 	       size);
 
 	if (_hash_shift)
