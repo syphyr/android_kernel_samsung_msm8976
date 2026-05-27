@@ -422,7 +422,7 @@ static int help(struct sk_buff *skb, unsigned int protoff,
 							&dcc_port, &addr_beg_p,
 							&addr_end_p)) {
 					pr_debug("unable to parse dcc command\n");
-					continue;
+					goto out;
 				}
 
 				pr_debug("DCC bound ip/port: %pI4:%u\n",
@@ -437,7 +437,7 @@ static int help(struct sk_buff *skb, unsigned int protoff,
 					net_warn_ratelimited("Forged DCC command from %pI4: %pI4:%u\n",
 							     &tuple->src.u3.ip,
 							     &dcc_ip, dcc_port);
-					continue;
+					goto out;
 				}
 
 				exp = nf_ct_expect_alloc(ct);
