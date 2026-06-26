@@ -2204,6 +2204,11 @@ static int ctrl_cmd_tag(const char *input)
 		res = -EINVAL;
 		goto err;
 	}
+	/* Validate socket FD early to avoid invalid lookups */
+	if (sock_fd < 0) {
+		res = -EBADF;
+		goto err;
+	}
 	el_socket = sockfd_lookup(sock_fd, &res);  /* This locks the file */
 	if (!el_socket) {
 		pr_info("qtaguid: ctrl_tag(%s): failed to lookup"
@@ -2346,6 +2351,11 @@ static int ctrl_cmd_untag(const char *input)
 		 input, argc, cmd, sock_fd);
 	if (argc < 2) {
 		res = -EINVAL;
+		return res;
+	}
+	/* Validate socket FD early to avoid invalid lookups */
+	if (sock_fd < 0) {
+		res = -EBADF;
 		return res;
 	}
 	el_socket = sockfd_lookup(sock_fd, &res);  /* This locks the file */
