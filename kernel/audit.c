@@ -73,6 +73,29 @@
 #endif
 // ] SEC_SELINUX_PORTING_QUALCOMM
 
+/* Backport helpers for overflow checking */
+#ifndef is_non_negative
+#define is_non_negative(a) ((a) > 0 || (a) == 0)
+#endif
+
+#ifndef is_negative
+#define is_negative(a) (!(is_non_negative(a)))
+#endif
+
+#ifndef check_shl_overflow
+#define check_shl_overflow(a, s, d) ({                                  \
+        typeof(a) _a = a;                                               \
+        typeof(s) _s = s;                                               \
+        typeof(d) _d = d;                                               \
+        unsigned long long _a_full = _a;                                \
+        unsigned int _to_shift =                                        \
+                is_non_negative(_s) && _s < 8 * sizeof(*d) ? _s : 0;    \
+        *_d = (_a_full << _to_shift);                                   \
+        (_to_shift != _s || is_negative(*_d) || is_negative(_a) ||      \
+        (*_d >> _to_shift) != _a);                                      \
+})
+#endif
+
 /* No auditing will take place until audit_initialized == AUDIT_INITIALIZED.
  * (Initialization happens after skb_init is called.) */
 #define AUDIT_DISABLED		-1
@@ -1290,7 +1313,8 @@ void audit_log_format(struct audit_buffer *ab, const char *fmt, ...)
 void audit_log_n_hex(struct audit_buffer *ab, const unsigned char *buf,
 		size_t len)
 {
-	int i, avail, new_len;
+	int avail;
+	size_t i, new_len;
 	unsigned char *ptr;
 	struct sk_buff *skb;
 	static const unsigned char *hex = "0123456789ABCDEF";
@@ -1301,7 +1325,12 @@ void audit_log_n_hex(struct audit_buffer *ab, const unsigned char *buf,
 	BUG_ON(!ab->skb);
 	skb = ab->skb;
 	avail = skb_tailroom(skb);
-	new_len = len<<1;
+
+	if (check_shl_overflow(len, 1, &new_len)) {
+		audit_log_format(ab, "?");
+		return;
+	}
+
 	if (new_len >= avail) {
 		/* Round the buffer request up to the next multiple */
 		new_len = AUDIT_BUFSIZ*(((new_len-avail)/AUDIT_BUFSIZ) + 1);
