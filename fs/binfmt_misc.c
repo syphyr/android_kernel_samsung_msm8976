@@ -296,7 +296,12 @@ static Node *create_entry(const char __user *buffer, size_t count)
 
 	del = *p++;	/* delimeter */
 
-	memset(buf+count, del, 8);
+	/* A flag-char delimiter runs the flag scan off the buffer. */
+	if (del == 'P' || del == 'O' || del == 'C' || del == 'F')
+		goto Einval;
+
+	/* Pad the buffer with the delim to simplify parsing below. */
+	memset(buf + count, del, 8);
 
 	e->name = p;
 	p = strchr(p, del);
