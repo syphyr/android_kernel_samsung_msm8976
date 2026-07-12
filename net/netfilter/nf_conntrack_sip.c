@@ -91,7 +91,7 @@ unsigned int (*nf_nat_sip_hook)(struct sk_buff *skb, unsigned int protoff,
 				unsigned int dataoff, const char **dptr,
 				unsigned int *datalen) __read_mostly;
 
-static void sip_calculate_parameters(s16 *diff, s16 *tdiff,
+static void sip_calculate_parameters(s32 *diff, s32 *tdiff,
 	unsigned int *dataoff, const char **dptr, unsigned int *datalen,
 	unsigned int msglen, unsigned int origlen)
 {
@@ -1811,7 +1811,7 @@ static int sip_help_tcp(struct sk_buff *skb, unsigned int protoff,
 	unsigned int dataoff;
 	unsigned int matchoff, matchlen, clen;
 	const char *dptr, *end;
-	s16 diff, tdiff = 0;
+	s32 diff, tdiff = 0;
 	int ret = NF_ACCEPT;
 	bool term;
 	unsigned int datalen = 0, msglen = 0, origlen = 0;
