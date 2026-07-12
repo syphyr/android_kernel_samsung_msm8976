@@ -113,7 +113,7 @@ extern unsigned int (*nf_nat_sip_hook)(struct sk_buff *skb,
 				       const char **dptr,
 				       unsigned int *datalen);
 extern void (*nf_nat_sip_seq_adjust_hook)(struct sk_buff *skb,
-					  unsigned int protoff, s16 off);
+					  unsigned int protoff, s32 off);
 extern unsigned int (*nf_nat_sip_expect_hook)(struct sk_buff *skb,
 					      unsigned int protoff,
 					      unsigned int dataoff,
