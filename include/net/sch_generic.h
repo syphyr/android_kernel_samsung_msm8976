@@ -64,6 +64,7 @@ struct Qdisc {
 	struct list_head	list;
 	u32			handle;
 	u32			parent;
+	int                     depth;
 	atomic_t		refcnt;
 	struct gnet_stats_rate_est	rate_est;
 	int			(*reshape_fail)(struct sk_buff *skb,

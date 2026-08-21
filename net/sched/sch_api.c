@@ -740,6 +740,9 @@ static int qdisc_graft(struct net_device *dev, struct Qdisc *parent,
 	if (parent == NULL) {
 		unsigned int i, num_q, ingress;
 
+		if (new)
+			new->depth = 0;
+
 		ingress = 0;
 		num_q = dev->num_tx_queues;
 		if ((q && q->flags & TCQ_F_INGRESS) ||
@@ -794,12 +797,17 @@ skip:
 		if (cops && cops->graft) {
 			unsigned long cl = cops->get(parent, classid);
 			if (cl) {
+				if (new && parent->depth >= 7) {
+					return -E2BIG;
+				}
 				err = cops->graft(parent, cl, new, &old);
 				cops->put(parent, cl);
 			} else
 				err = -ENOENT;
 		}
 		if (!err)
+			if (new)
+				new->depth = parent->depth + 1;
 			notify_and_destroy(net, skb, n, classid, old, new);
 	}
 	return err;
