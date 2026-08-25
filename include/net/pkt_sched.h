@@ -14,6 +14,7 @@ struct qdisc_walker {
 
 #define QDISC_ALIGNTO		64
 #define QDISC_ALIGN(len)	(((len) + QDISC_ALIGNTO-1) & ~(QDISC_ALIGNTO-1))
+#define QDISC_PKT_LEN_MAX       (1 << 20)       /* 1 MiB */
 
 static inline void *qdisc_priv(struct Qdisc *q)
 {
