@@ -2077,7 +2077,8 @@ static int tpacket_fill_skb(struct packet_sock *po, struct sk_buff *skb,
 		__be16 proto, unsigned char *addr, int hlen)
 {
 	union tpacket_uhdr ph;
-	int to_write, offset, len, tp_len, nr_frags, len_max;
+	u32 tp_len;
+	int to_write, offset, len, nr_frags, len_max;
 	struct socket *sock = po->sk.sk_socket;
 	struct page *page;
 	void *data;
@@ -2101,7 +2102,7 @@ static int tpacket_fill_skb(struct packet_sock *po, struct sk_buff *skb,
 		break;
 	}
 	if (unlikely(tp_len > size_max)) {
-		pr_err("packet size is too long (%d > %d)\n", tp_len, size_max);
+		pr_err("packet size is too long (%u > %d)\n", tp_len, size_max);
 		return -EMSGSIZE;
 	}
 
