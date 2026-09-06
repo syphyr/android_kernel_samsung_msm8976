@@ -53,7 +53,7 @@ static bool rpfilter_lookup_reverse6(const struct sk_buff *skb,
 	}
 
 	rt = (void *) ip6_route_lookup(dev_net(dev), &fl6, lookup_flags);
-	if (rt->dst.error)
+	if (rt->dst.error || !rt->rt6i_idev)
 		goto out;
 
 	if (rt->rt6i_flags & (RTF_REJECT|RTF_ANYCAST))
