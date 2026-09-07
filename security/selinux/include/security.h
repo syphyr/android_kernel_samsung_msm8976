@@ -188,8 +188,8 @@ int security_net_peersid_resolve(u32 nlbl_sid, u32 nlbl_type,
 				 u32 xfrm_sid,
 				 u32 *peer_sid);
 
-int security_get_classes(char ***classes, int *nclasses);
-int security_get_permissions(char *class, char ***perms, int *nperms);
+int security_get_classes(char ***classes, u32 *nclasses);
+int security_get_permissions(char *class, char ***perms, u32 *nperms);
 int security_get_reject_unknown(void);
 int security_get_allow_unknown(void);
 
