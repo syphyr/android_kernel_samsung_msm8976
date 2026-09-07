@@ -2865,6 +2865,7 @@ static int get_classes_callback(void *k, void *d, void *args)
 
 int security_get_classes(char ***classes, u32 *nclasses)
 {
+	u32 i;
 	int rc;
 
 	read_lock(&policy_rwlock);
@@ -2877,16 +2878,30 @@ int security_get_classes(char ***classes, u32 *nclasses)
 
 	rc = hashtab_map(policydb.p_classes.table, get_classes_callback,
 			*classes);
-	if (rc) {
-		u32 i;
+	if (rc)
+		goto err;
 
-		for (i = 0; i < *nclasses; i++)
-			kfree((*classes)[i]);
-		kfree(*classes);
+	/*
+	 * The class symtab may be sparse, which policydb_class_isvalid() exists
+	 * to absorb; the callback fills this array by value, so an unclaimed
+	 * one leaves a NULL that sel_make_classes() hands to sel_make_dir().
+	 */
+	for (i = 0; i < *nclasses; i++) {
+		if (!(*classes)[i]) {
+			rc = -EINVAL;
+			goto err;
+		}
 	}
 
 out:
 	read_unlock(&policy_rwlock);
+	return rc;
+
+err:
+	read_unlock(&policy_rwlock);
+	for (i = 0; i < *nclasses; i++)
+		kfree((*classes)[i]);
+	kfree(*classes);
 	return rc;
 }
 
