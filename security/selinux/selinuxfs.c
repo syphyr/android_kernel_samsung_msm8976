@@ -1597,7 +1597,8 @@ static const struct file_operations sel_policycap_ops = {
 static int sel_make_perm_files(char *objclass, int classvalue,
 				struct dentry *dir)
 {
-	int i, rc, nperms;
+	u32 i, nperms;
+	int rc;
 	char **perms;
 
 	rc = security_get_permissions(objclass, &perms, &nperms);
@@ -1685,7 +1686,8 @@ static void sel_remove_classes(void)
 
 static int sel_make_classes(void)
 {
-	int rc, nclasses, i;
+	u32 i, nclasses;
+	int rc;
 	char **classes;
 
 	/* delete any existing entries */
