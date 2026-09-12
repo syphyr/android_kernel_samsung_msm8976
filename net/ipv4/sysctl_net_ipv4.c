@@ -48,6 +48,9 @@ static int tcp_delack_seg_max = 60;
 static int tcp_use_userconfig_min;
 static int tcp_use_userconfig_max = 1;
 
+static int tcp_min_rcvbuf = 4096;
+
+
 /* Update system visible IP port range */
 static void set_local_port_range(int range[2])
 {
@@ -586,7 +589,7 @@ static struct ctl_table ipv4_table[] = {
 		.maxlen		= sizeof(sysctl_tcp_rmem),
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec_minmax,
-		.extra1		= &one,
+		.extra1		= &tcp_min_rcvbuf,
 	},
 	{
 		.procname	= "tcp_app_win",
