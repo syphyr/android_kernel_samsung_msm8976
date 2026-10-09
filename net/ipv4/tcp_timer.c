@@ -380,6 +380,7 @@ void tcp_retransmit_timer(struct sock *sk)
 {
 	struct tcp_sock *tp = tcp_sk(sk);
 	struct inet_connection_sock *icsk = inet_csk(sk);
+	struct sk_buff *skb;
 
 	if (tp->fastopen_rsk) {
 		WARN_ON_ONCE(sk->sk_state != TCP_SYN_RECV &&
@@ -390,36 +391,13 @@ void tcp_retransmit_timer(struct sock *sk)
 		 */
 		return;
 	}
+
 	if (!tp->packets_out)
-		goto out;
-
-
-if (WARN_ON(tcp_write_queue_empty(sk))) {
-        pr_err("TCP QUEUE CORRUPTION:\n");
-        pr_err("  sk=%p state=%u family=%u protocol=%u\n",
-               sk, sk->sk_state, sk->sk_family, sk->sk_protocol);
-
-		 pr_err("  write_queue: qlen=%u next=%p prev=%p\n",
-           sk->sk_write_queue.qlen,
-           sk->sk_write_queue.next,
-           sk->sk_write_queue.prev);
-
-   		pr_err("  head=%p\n", tcp_write_queue_head(sk));
-        pr_err("  packets_out=%u retrans_out=%u\n",
-               tp->packets_out, tp->retrans_out);
-        pr_err("  snd_una=%u snd_nxt=%u snd_wnd=%u\n",
-               tp->snd_una, tp->snd_nxt, tp->snd_wnd);
-        pr_err("  snd_cwnd=%u snd_ssthresh=%u\n",
-               tp->snd_cwnd, tp->snd_ssthresh);
-        pr_err("  write_seq=%u pushed_seq=%u\n",
-               tp->write_seq, tp->pushed_seq);
-        pr_err("  snd_head=%p snd_nxt=%u\n",
-               tcp_write_queue_head(sk), tp->snd_nxt);
-
-        dump_stack();
-		tp->packets_out = 0;
 		return;
-}
+
+	skb = tcp_rtx_queue_head(sk);
+	if (WARN_ON_ONCE(!skb))
+		return;
 
 	tp->tlp_high_seq = 0;
 
@@ -451,7 +429,7 @@ if (WARN_ON(tcp_write_queue_empty(sk))) {
 			goto out;
 		}
 		tcp_enter_loss(sk, 0);
-		tcp_retransmit_skb(sk, tcp_write_queue_head(sk));
+		tcp_retransmit_skb(sk, skb);
 		__sk_dst_reset(sk);
 		goto out_reset_timer;
 	}

@@ -123,13 +123,19 @@ static int fib4_rule_match(struct fib_rule *rule, struct flowi *fl, int flags)
 	return 1;
 }
 
+#define FIB_MAX_AUTO_TABLE_ID  4096
+
 static struct fib_table *fib_empty_table(struct net *net)
 {
-	u32 id;
+	u32 id = 1;
 
-	for (id = 1; id <= RT_TABLE_MAX; id++)
+	while (1) {
 		if (fib_get_table(net, id) == NULL)
 			return fib_new_table(net, id);
+
+		if (id++ == FIB_MAX_AUTO_TABLE_ID)
+			break;
+	}
 	return NULL;
 }
 

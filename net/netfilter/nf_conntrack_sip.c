@@ -661,7 +661,7 @@ static const char *sip_skip_whitespace(const char *dptr, const char *limit)
 		if (dptr == NULL)
 			return NULL;
 	}
-	return dptr;
+	return dptr < limit ? dptr : NULL;
 }
 
 /* Search within a SIP header value, dealing with continuation lines */
